@@ -39,29 +39,34 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS (MÉTODO POR KEY ID) ---
-# Este script es más robusto porque busca el identificador que Streamlit le da al botón
+# --- JAVASCRIPT: DETECTOR DE TECLAS (MÉTODO DE POSICIÓN) ---
+# Este script cuenta los botones en la página y los pulsa según su orden
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
-    const keyMap = {
-        '1': 'v_a_Si2', '2': 'v_a_Sol2', '3': 'v_a_Mi', '4': 'v_a_Do', '5': 'v_a_La', '6': 'v_a_Fa#0', '7': 'v_a_Re0',
-        'q': 'v_i_La2', 'w': 'v_i_Fa#', 'e': 'v_i_Re', 'r': 'v_i_Si', 't': 'v_i_Sol', 'y': 'v_i_Mi0'
+    const key = e.key.toLowerCase();
+    const allBtns = doc.querySelectorAll('button');
+
+    // Mapeo de tecla a índice de botón (empezando desde el primero del teclado virtual)
+    // Asumiendo que los primeros botones de la página son los del Arka e Ira
+    const map = {
+        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, // Arka
+        'q': 7, 'w': 8, 'e': 9, 'r': 10, 't': 11, 'y': 12     // Ira
     };
-    const keyId = keyMap[e.key.toLowerCase()];
-    if (keyId) {
-        // Buscamos el botón por su clave única de Streamlit
-        const btn = doc.querySelector(`button[kind="secondary"][key="${keyId}"], button[data-testid="stBaseButton-secondary"]`);
-        // Si no lo encuentra por testid, buscamos todos y filtramos por el texto interno
-        const allBtns = doc.querySelectorAll('button');
-        allBtns.forEach(b => {
-            // Este es el método más seguro: buscar el botón que fue creado con esa KEY
-            if (b.parentElement.parentElement.innerHTML.includes(keyId)) {
-                b.click();
-            }
-        });
+
+    if (map[key] !== undefined) {
+        // Buscamos los botones que están dentro del Siku Virtual
+        // Filtramos para evitar pulsar botones de los selectores de arriba
+        const sikuBtns = Array.from(allBtns).filter(b =>
+            b.innerText.includes('\\n') ||
+            (b.innerText.length < 10 && /\\d/.test(b.innerText))
+        );
+
+        if (sikuBtns[map[key]]) {
+            sikuBtns[map[key]].click();
+        }
     }
 });
 </script>
@@ -173,15 +178,14 @@ col_head, col_audio = st.columns([1, 1])
 with col_head:
     st.subheader("🎹 Siku Virtual")
 
+audio_placeholder = col_audio.empty()
 if st.session_state.audio_file:
-    with col_audio:
-        placeholder = st.empty()
-        if os.path.exists(st.session_state.audio_file):
-            placeholder.audio(st.session_state.audio_file, autoplay=True)
-            time.sleep(1.2)
-            placeholder.empty()
-            st.session_state.audio_file = None
-            st.rerun()
+    if os.path.exists(st.session_state.audio_file):
+        audio_placeholder.audio(st.session_state.audio_file, autoplay=True)
+        time.sleep(1.2)
+        audio_placeholder.empty()
+        st.session_state.audio_file = None
+        st.rerun()
 
 # ARKA (1-7)
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1, 2])
@@ -192,7 +196,6 @@ with c_arka[0]:
 for i, n in enumerate(ARKA):
     num = TABLATURA.get(n, "")
     with c_arka[i + 1]:
-        # IMPORTANTE: Aquí la key coincide con el mapa de JavaScript
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
 # IRA (Q-Y)
