@@ -38,7 +38,7 @@ st.markdown(
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* Evitar que los círculos se separen demasiado */
+    /* Forzar que las columnas se peguen */
     [data-testid="stHorizontalBlock"] {
         width: fit-content !important;
         gap: 5px !important;
@@ -100,18 +100,15 @@ TABLATURA = {
 }
 
 # --- MANEJO DE ESTADO DE AUDIO ---
-if "audio_key" not in st.session_state:
-    st.session_state.audio_key = 0
 if "current_file" not in st.session_state:
     st.session_state.current_file = None
 
 
 def tocar(nota):
     st.session_state.current_file = f"{nota}.wav"
-    st.session_state.audio_key += 1
 
 
-# --- INTERFAZ SUPERIOR (LO PRINCIPAL) ---
+# --- INTERFAZ SUPERIOR ---
 st.title("🎶 SikuTab: Transpositor y Teclado")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
@@ -124,11 +121,10 @@ with col_m:
 st.write("---")
 
 # ENTRADA DE MELODÍA
-entrada = st.text_input("Escribe la melodía aquí (ej: sol1 la1 si1) y presiona ENTER:")
+entrada = st.text_input("Escribe la melodía aquí:")
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
-    # Definimos destino (Sol Mayor o Mi Menor)
     dest = (
         ["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"]
         if modo == "Mayor"
@@ -136,12 +132,7 @@ if entrada:
     )
 
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
-    f_arka_n, f_ira_n, f_arka_num, f_ira_num = (
-        "ARKA (Notas):  ",
-        "IRA  (Notas):  ",
-        "ARKA (Num):    ",
-        "IRA  (Num):    ",
-    )
+    f_arka_n, f_ira_n, f_arka_num, f_ira_num = "ARKA: ", "IRA:  ", "NUM:  ", "NUM:  "
     ancho = 8
 
     for nota_raw in notas_usuario:
@@ -160,32 +151,24 @@ if entrada:
             if nota_t in ARKA:
                 f_arka_n += nota_t.ljust(ancho)
                 f_ira_n += " " * ancho
-                f_arka_num += num_t.ljust(ancho)
-                f_ira_num += " " * ancho
             else:
                 f_arka_n += " " * ancho
                 f_ira_n += nota_t.ljust(ancho)
-                f_arka_num += " " * ancho
-                f_ira_num += num_t.ljust(ancho)
 
-    st.markdown("### 🎼 Resultado de Transposición")
-    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
+    st.code(f"{f_arka_n}\n{f_ira_n}")
 
 st.write("---")
 
-# --- SIKU VIRTUAL (AL FINAL) ---
+# --- SIKU VIRTUAL ---
 col_head, col_audio = st.columns([1, 1])
 with col_head:
     st.subheader("🎹 Siku Virtual")
 
-# REPRODUCTOR SEGURO
+# REPRODUCTOR USANDO ST.EMPTY (Reseteo sin 'key')
+audio_placeholder = col_audio.empty()
 if st.session_state.current_file and os.path.exists(st.session_state.current_file):
-    with col_audio:
-        st.audio(
-            st.session_state.current_file,
-            autoplay=True,
-            key=f"p_{st.session_state.audio_key}",
-        )
+    audio_placeholder.empty()  # Limpiamos el espacio antes de volver a poner el audio
+    audio_placeholder.audio(st.session_state.current_file, autoplay=True)
 
 # FILA ARKA
 c_arka = st.columns([1.2, 1, 1, 1, 1, 1, 1, 1, 2])
