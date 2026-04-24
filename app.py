@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: CÍRCULOS Y EFECTO DE PULSACIÓN ---
+# --- CSS: CÍRCULOS Y DISEÑO COMPACTO ---
 st.markdown(
     """
     <style>
@@ -25,13 +25,10 @@ st.markdown(
         line-height: 1.2 !important;
         padding: 0 !important;
         font-size: 13px !important;
-        transition: all 0.1s ease;
     }
-    /* Clase para cuando se presiona la tecla física */
-    .stButton > button:active, .key-active {
-        background-color: #9b59b6 !important;
-        transform: scale(0.9);
-        border-color: white !important;
+    .stButton > button:hover {
+        border-color: #9b59b6 !important;
+        color: #9b59b6 !important;
     }
     .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; }
     .arka-label { color: #9b59b6; }
@@ -43,25 +40,20 @@ st.markdown(
 )
 
 # --- JAVASCRIPT: DETECTOR DE TECLAS ---
-# Este script busca el botón correcto y le hace un "click" virtual
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
     const keyMap = {
-        '1': 'v_a_Si2', '2': 'v_a_Sol2', '3': 'v_a_Mi', '4': 'v_a_Do', '5': 'v_a_La', '6': 'v_a_Fa#0', '7': 'v_a_Re0',
-        'q': 'v_i_La2', 'w': 'v_i_Fa#', 'e': 'v_i_Re', 'r': 'v_i_Si', 't': 'v_i_Sol', 'y': 'v_i_Mi0'
+        '1': 'Si2', '2': 'Sol2', '3': 'Mi', '4': 'Do', '5': 'La', '6': 'Fa#0', '7': 'Re0',
+        'q': 'La2', 'w': 'Fa#', 'e': 'Re', 'r': 'Si', 't': 'Sol', 'y': 'Mi0'
     };
-    const buttonId = keyMap[e.key.toLowerCase()];
-    if (buttonId) {
-        const btn = doc.querySelector(`button[kind="secondary"] > div > p:contains("${buttonId}")`);
-        // Buscamos por el aria-label o el texto del botón interno de Streamlit
+    const nota = keyMap[e.key.toLowerCase()];
+    if (nota) {
         const allBtns = doc.querySelectorAll('button');
         allBtns.forEach(b => {
-            if (b.innerText.includes(buttonId.replace('v_a_','').replace('v_i_',''))) {
-               b.click();
-            }
+            if (b.innerText.includes(nota)) { b.click(); }
         });
     }
 });
@@ -70,7 +62,39 @@ doc.addEventListener('keydown', function(e) {
     height=0,
 )
 
-# --- DATOS Y AUDIO ---
+# --- LÓGICA DE ESCALAS ---
+NOTAS_MUSICALES = [
+    "Do",
+    "Do#",
+    "Re",
+    "Re#",
+    "Mi",
+    "Fa",
+    "Fa#",
+    "Sol",
+    "Sol#",
+    "La",
+    "La#",
+    "Si",
+]
+BEMOLES = {"Reb": "Do#", "Mib": "Re#", "Solb": "Fa#", "Lab": "Sol#", "Sib": "La#"}
+
+
+def generar_escala(tonica, modo):
+    pasos = [2, 2, 1, 2, 2, 2, 1] if modo == "mayor" else [2, 1, 2, 2, 1, 2, 2]
+    t_limpia = BEMOLES.get(tonica.capitalize(), tonica.capitalize())
+    if t_limpia not in NOTAS_MUSICALES:
+        return None
+    idx = NOTAS_MUSICALES.index(t_limpia)
+    escala = []
+    actual = idx
+    for p in pasos:
+        escala.append(NOTAS_MUSICALES[actual % 12])
+        actual += p
+    return escala
+
+
+# --- DATOS DEL SIKU ---
 ARKA = ["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]
 IRA = ["La2", "Fa#", "Re", "Si", "Sol", "Mi0"]
 TABLATURA = {
@@ -89,6 +113,7 @@ TABLATURA = {
     "Si2": "1",
 }
 
+# --- MANEJO DE AUDIO ---
 if "audio_file" not in st.session_state:
     st.session_state.audio_file = None
 
@@ -97,11 +122,67 @@ def tocar(nota):
     st.session_state.audio_file = f"{nota}.wav"
 
 
-# --- INTERFAZ ---
-st.title("🎶 SikuTab")
+# --- INTERFAZ SUPERIOR: CONFIGURACIÓN ---
+st.title("🎶 SikuTab: Transpositor y Siku Virtual")
+st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
+
+col_t, col_m = st.columns(2)
+with col_t:
+    original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
+with col_m:
+    modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
+
 st.write("---")
 
-# --- SIKU VIRTUAL ---
+# --- TRANSPOSICIÓN ---
+entrada = st.text_input("Escribe la melodía (ej: sol1 la1 si1) y presiona ENTER:")
+
+if entrada:
+    ref_original = generar_escala(original_tonica, modo.lower())
+    dest = (
+        ["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"]
+        if modo == "Mayor"
+        else ["Mi", "Fa#", "Sol", "La", "Si", "Do", "Re"]
+    )
+
+    notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
+    f_arka_n, f_ira_n, f_arka_num, f_ira_num = (
+        "ARKA (Notas):  ",
+        "IRA  (Notas):  ",
+        "ARKA (Num):    ",
+        "IRA  (Num):    ",
+    )
+    ancho = 8
+
+    for nota_raw in notas_usuario:
+        sufijo = (
+            "0" if nota_raw.endswith("0") else ("2" if nota_raw.endswith("2") else "")
+        )
+        n_nombre = nota_raw[:-1] if sufijo else nota_raw
+        n_limpia = "".join(
+            [c for c in n_nombre if c.isalpha() or c == "#"]
+        ).capitalize()
+        n_limpia = BEMOLES.get(n_limpia, n_limpia)
+
+        if n_limpia in ref_original:
+            nota_t = dest[ref_original.index(n_limpia)] + sufijo
+            num_t = TABLATURA.get(nota_t, "?")
+            if nota_t in ARKA:
+                f_arka_n += nota_t.ljust(ancho)
+                f_ira_n += " " * ancho
+                f_arka_num += num_t.ljust(ancho)
+                f_ira_num += " " * ancho
+            else:
+                f_arka_n += " " * ancho
+                f_ira_n += nota_t.ljust(ancho)
+                f_arka_num += " " * ancho
+                f_ira_num += num_t.ljust(ancho)
+
+    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
+
+st.write("---")
+
+# --- SIKU VIRTUAL (AL FINAL) ---
 col_head, col_audio = st.columns([1, 1])
 with col_head:
     st.subheader("🎹 Siku Virtual")
@@ -116,8 +197,8 @@ if st.session_state.audio_file:
             st.session_state.audio_file = None
             st.rerun()
 
-# FILA ARKA (1 al 7)
-c_arka = st.columns([1.2, 1, 1, 1, 1, 1, 1, 1, 2])
+# FILA ARKA
+c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1, 2])
 with c_arka[0]:
     st.markdown(
         '<div class="row-label arka-label">ARKA (1-7)</div>', unsafe_allow_html=True
@@ -127,8 +208,8 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# FILA IRA (Q al Y)
-c_ira = st.columns([1.2, 0.6, 1, 1, 1, 1, 1, 1, 2.5])
+# FILA IRA
+c_ira = st.columns([1.5, 0.6, 1, 1, 1, 1, 1, 1, 2.5])
 with c_ira[0]:
     st.markdown(
         '<div class="row-label ira-label">IRA (Q-Y)</div>', unsafe_allow_html=True
