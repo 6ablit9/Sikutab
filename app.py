@@ -39,23 +39,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS (CORREGIDO) ---
+# --- JAVASCRIPT: DETECTOR DE TECLAS (MÉTODO POR KEY ID) ---
+# Este script es más robusto porque busca el identificador que Streamlit le da al botón
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
-    // Mapeo de tecla física -> Nota exacta del botón
     const keyMap = {
-        '1': 'Si2', '2': 'Sol2', '3': 'Mi', '4': 'Do', '5': 'La', '6': 'Fa#0', '7': 'Re0',
-        'q': 'La2', 'w': 'Fa#', 'e': 'Re', 'r': 'Si', 't': 'Sol', 'y': 'Mi0'
+        '1': 'v_a_Si2', '2': 'v_a_Sol2', '3': 'v_a_Mi', '4': 'v_a_Do', '5': 'v_a_La', '6': 'v_a_Fa#0', '7': 'v_a_Re0',
+        'q': 'v_i_La2', 'w': 'v_i_Fa#', 'e': 'v_i_Re', 'r': 'v_i_Si', 't': 'v_i_Sol', 'y': 'v_i_Mi0'
     };
-    const notaBuscada = keyMap[e.key.toLowerCase()];
-    if (notaBuscada) {
+    const keyId = keyMap[e.key.toLowerCase()];
+    if (keyId) {
+        // Buscamos el botón por su clave única de Streamlit
+        const btn = doc.querySelector(`button[kind="secondary"][key="${keyId}"], button[data-testid="stBaseButton-secondary"]`);
+        // Si no lo encuentra por testid, buscamos todos y filtramos por el texto interno
         const allBtns = doc.querySelectorAll('button');
         allBtns.forEach(b => {
-            // Buscamos si el texto del botón contiene la nota (ej: "1\nSi2" contiene "Si2")
-            if (b.innerText.split('\\n').includes(notaBuscada) || b.innerText.endsWith(notaBuscada)) {
+            // Este es el método más seguro: buscar el botón que fue creado con esa KEY
+            if (b.parentElement.parentElement.innerHTML.includes(keyId)) {
                 b.click();
             }
         });
@@ -125,7 +128,7 @@ def tocar(nota):
     st.session_state.audio_file = f"{nota}.wav"
 
 
-# --- INTERFAZ ---
+# --- INTERFAZ SUPERIOR ---
 st.title("🎶 SikuTab: Transpositor y Teclado")
 
 col_t, col_m = st.columns(2)
@@ -189,6 +192,7 @@ with c_arka[0]:
 for i, n in enumerate(ARKA):
     num = TABLATURA.get(n, "")
     with c_arka[i + 1]:
+        # IMPORTANTE: Aquí la key coincide con el mapa de JavaScript
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
 # IRA (Q-Y)
