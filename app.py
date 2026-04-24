@@ -33,7 +33,7 @@ def generar_escala(tonica, modo):
     return escala
 
 
-# --- REPARTO Y TABLATURA (Registro Corregido) ---
+# --- REPARTO Y TABLATURA ---
 TABLATURA = {
     "Re0": "7",
     "Mi0": "6",
@@ -64,23 +64,35 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# --- GUÍA DESPLEGABLE CON COLORES ---
+# --- GUÍA DESPLEGABLE PERSONALIZADA ---
 with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
     st.markdown("### Cómo escribir las notas:")
-    st.write("- **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).")
-    st.success("- **Registro Agudo (Voz):** Agrega un **2** (ej: `sol2`, `la2`).")
-    st.error("- **Registro Grave (Zanja):** Agrega un **0** (ej: `re0`, `mi0`).")
+    st.markdown("- **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).")
+    st.markdown(
+        "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`, `la2`).",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`, `mi0`).",
+        unsafe_allow_html=True,
+    )
 
     st.info("""
-    **⚠️ Nota sobre la Adaptación:**
+    **⚠️ Adaptación de Melodía:**
     Si al transponer una nota sale del registro, aparecerá un **[?]**.
     Deberás ajustar la octava en tu entrada original para que calce en el instrumento.
     """)
 
     st.markdown("### 🎼 Notas disponibles en el Siku:")
-    st.error("**GRAVES:** Re0, Mi0, Fa#0")
-    st.write("**MEDIOS:** Sol, La, Si, Do, Re, Mi, Fa#")
-    st.success("**AGUDOS:** Sol2, La2, Si2")
+    st.markdown(
+        "<span style='color: #e67e22;'>**GRAVES:** Re0, Mi0, Fa#0</span>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("**MEDIOS:** Sol, La, Si, Do, Re, Mi, Fa#")
+    st.markdown(
+        "<span style='color: #9b59b6;'>**AGUDOS:** Sol2, La2, Si2</span>",
+        unsafe_allow_html=True,
+    )
 
 entrada = st.text_area(
     "Escribe la melodía aquí:",
