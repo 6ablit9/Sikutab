@@ -54,6 +54,7 @@ NOTAS_IRA = ["Mi0", "Sol", "Si", "Re", "Fa#", "La2"]
 
 # --- INTERFAZ WEB ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
+
 st.title("🎶 SikuTab: Transpositor Arka/Ira")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
@@ -77,11 +78,9 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
         unsafe_allow_html=True,
     )
 
-    st.info("""
-    **⚠️ Adaptación de Melodía:**
-    Si al transponer una nota sale del registro, aparecerá un **[?]**.
-    Deberás ajustar la octava en tu entrada original para que calce en el instrumento.
-    """)
+    st.info(
+        "**⚠️ Adaptación:** Si aparece **[?]**, ajusta la octava en la entrada original."
+    )
 
     st.markdown("### 🎼 Notas disponibles en el Siku:")
     st.markdown(
@@ -94,23 +93,14 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
         unsafe_allow_html=True,
     )
 
-# --- ENTRADA DE NOTAS Y BOTÓN AL LADO ---
-col_input, col_btn = st.columns([8, 1])
-
-with col_input:
-    entrada = st.text_area(
-        "Escribe la melodía aquí:",
-        placeholder="Ejemplo: sol la si do re mi fa#",
-        height=150,
-        label_visibility="collapsed",
-    )
-
-with col_btn:
-    st.write("##")  # Espaciador para alinear el botón con el área de texto
-    procesar = st.button("Listo")
+# --- ENTRADA DE NOTAS (Estilo Chat / Enter para enviar) ---
+st.write("---")
+entrada = st.chat_input(
+    "Escribe la melodía aquí y presiona ENTER (Shift+Enter para nueva línea)"
+)
 
 # --- PROCESAMIENTO ---
-if procesar and entrada:
+if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
 
     if modo == "Mayor":
@@ -149,7 +139,7 @@ if procesar and entrada:
                 f_arka_n += " " * ancho
                 f_ira_n += nota_t.ljust(ancho)
                 f_arka_num += " " * ancho
-                f_ira_num += nota_t.ljust(ancho)
+                f_ira_num += num_t.ljust(ancho)
             else:
                 f_arka_n += f"[{nota_t}?] ".ljust(ancho)
                 f_ira_n += " " * ancho
@@ -161,7 +151,8 @@ if procesar and entrada:
             f_arka_num += "??".ljust(ancho)
             f_ira_num += " " * ancho
 
+    # Mostrar la entrada del usuario para referencia
+    st.write(f"**Melodía procesada:** _{entrada}_")
+
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
     st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
-elif procesar and not entrada:
-    st.warning("⚠️ Ingresa una melodía.")
