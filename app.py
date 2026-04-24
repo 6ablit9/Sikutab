@@ -8,6 +8,7 @@ st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 st.markdown(
     """
     <style>
+    /* Estilo de los tubos (círculos) */
     .stButton > button {
         border-radius: 50% !important;
         width: 80px !important;
@@ -15,19 +16,31 @@ st.markdown(
         border: 2px solid #555 !important;
         background-color: #2e2e2e !important;
         color: white !important;
-        font-weight: bold !important;
-        font-size: 14px !important;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         margin: 0 auto;
+        line-height: 1.2 !important;
     }
     .stButton > button:hover {
         border-color: #9b59b6 !important;
         color: #9b59b6 !important;
     }
+    /* Estilo para los nombres laterales */
+    .row-label {
+        font-weight: bold;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        height: 80px;
+    }
+    .arka-label { color: #9b59b6; }
+    .ira-label { color: #e67e22; }
+
+    /* Contenedor para desplazar la Ira y que encaje entre los tubos del Arka */
     .ira-container {
-        padding-left: 45px;
+        padding-left: 20px;
     }
     </style>
     """,
@@ -66,7 +79,7 @@ def generar_escala(tonica, modo):
     return escala
 
 
-# --- DISPOSICIÓN ---
+# --- DISPOSICIÓN Y TABLATURA ---
 ARKA = ["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]
 IRA = ["La2", "Fa#", "Re", "Si", "Sol", "Mi0"]
 
@@ -90,9 +103,9 @@ TABLATURA = {
 def reproducir(nota):
     archivo = f"{nota}.wav"
     if os.path.exists(archivo):
-        st.audio(archivo, format="audio/wav", autoplay=True)
-    else:
-        st.error(f"Falta: {archivo}")
+        # El reproductor aparece arriba (donde se llama a esta función)
+        return archivo
+    return None
 
 
 # --- INTERFAZ SUPERIOR ---
@@ -107,7 +120,7 @@ with col_m:
 
 st.write("---")
 
-# --- SECCIÓN DE TRANSPOSICIÓN (AHORA ARRIBA) ---
+# --- TRANSPOSICIÓN ---
 entrada = st.text_input(
     "Escribe la melodía aquí y presiona ENTER:", placeholder="Ej: re0 mi0 sol la do2"
 )
@@ -121,8 +134,12 @@ if entrada:
     )
 
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
-    f_arka_n, f_ira_n = "ARKA (Notas):  ", "IRA  (Notas):  "
-    f_arka_num, f_ira_num = "ARKA (Num):    ", "IRA  (Num):    "
+    f_arka_n, f_ira_n, f_arka_num, f_ira_num = (
+        "ARKA (Notas):  ",
+        "IRA  (Notas):  ",
+        "ARKA (Num):    ",
+        "IRA  (Num):    ",
+    )
     ancho = 8
 
     for nota_raw in notas_usuario:
@@ -149,26 +166,45 @@ if entrada:
                 f_arka_num += " " * ancho
                 f_ira_num += num_t.ljust(ancho)
 
-    st.markdown(f"### 🎼 Resultado")
     st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
 
 st.write("---")
 
-# --- TECLADO VISUAL (AL FINAL) ---
-st.subheader("🎹 Teclado de Referencia")
+# --- SIKU VIRTUAL (AL FINAL) ---
+col_title, col_audio = st.columns([1, 1])
+with col_title:
+    st.subheader("🎹 Siku Virtual")
 
+# Espacio para el audio (fijo arriba del teclado)
+audio_placeholder = col_audio.empty()
+
+# Filas del teclado con etiquetas a la izquierda
 # Fila ARKA
-cols_arka = st.columns(7)
+c_label, *c_tubos = st.columns([1, 1, 1, 1, 1, 1, 1, 1])
+with c_label:
+    st.markdown('<div class="row-label arka-label">ARKA</div>', unsafe_allow_html=True)
+
 for i, n in enumerate(ARKA):
-    with cols_arka[i]:
-        if st.button(n, key=f"a_{n}"):
-            reproducir(n)
+    num = TABLATURA.get(n, "")
+    with c_tubos[i]:
+        # El nombre del botón incluye el número arriba y la nota abajo
+        if st.button(f"{num}\n{n}", key=f"a_{n}"):
+            res = reproducir(n)
+            if res:
+                audio_placeholder.audio(res, format="audio/wav", autoplay=True)
 
 # Fila IRA
 st.markdown('<div class="ira-container">', unsafe_allow_html=True)
-cols_ira = st.columns([0.5, 1, 1, 1, 1, 1, 1, 0.5])
+# Usamos un desfase en las columnas para que la Ira encaje visualmente
+c_label_i, spacer, *c_tubos_i = st.columns([1, 0.5, 1, 1, 1, 1, 1, 1])
+with c_label_i:
+    st.markdown('<div class="row-label ira-label">IRA</div>', unsafe_allow_html=True)
+
 for i, n in enumerate(IRA):
-    with cols_ira[i + 1]:
-        if st.button(n, key=f"i_{n}"):
-            reproducir(n)
+    num = TABLATURA.get(n, "")
+    with c_tubos_i[i]:
+        if st.button(f"{num}\n{n}", key=f"i_{n}"):
+            res = reproducir(n)
+            if res:
+                audio_placeholder.audio(res, format="audio/wav", autoplay=True)
 st.markdown("</div>", unsafe_allow_html=True)
