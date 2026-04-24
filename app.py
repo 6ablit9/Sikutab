@@ -64,14 +64,14 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# --- GUÍA DESPLEGABLE PERSONALIZADA ---
+# --- GUÍA DESPLEGABLE ---
 with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
     st.markdown("### Cómo escribir las notas:")
-    st.markdown("- **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).")
     st.markdown(
         "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`, `la2`).",
         unsafe_allow_html=True,
     )
+    st.markdown("- **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).")
     st.markdown(
         "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`, `mi0`).",
         unsafe_allow_html=True,
@@ -85,24 +85,31 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
 
     st.markdown("### 🎼 Notas disponibles en el Siku:")
     st.markdown(
-        "<span style='color: #e67e22;'>**GRAVES:** Re0, Mi0, Fa#0</span>",
+        "<span style='color: #9b59b6;'>**AGUDOS:** Sol2, La2, Si2</span>",
         unsafe_allow_html=True,
     )
     st.markdown("**MEDIOS:** Sol, La, Si, Do, Re, Mi, Fa#")
     st.markdown(
-        "<span style='color: #9b59b6;'>**AGUDOS:** Sol2, La2, Si2</span>",
+        "<span style='color: #e67e22;'>**GRAVES:** Re0, Mi0, Fa#0</span>",
         unsafe_allow_html=True,
     )
 
-entrada = st.text_area(
-    "Escribe la melodía aquí:",
-    placeholder="Ejemplo: sol la si do re mi fa#",
-    height=150,
-)
+# --- ENTRADA DE NOTAS Y BOTÓN AL LADO ---
+col_input, col_btn = st.columns([8, 1])
 
-# Botón para procesar
-procesar = st.button("🚀 Procesar Melodía")
+with col_input:
+    entrada = st.text_area(
+        "Escribe la melodía aquí:",
+        placeholder="Ejemplo: sol la si do re mi fa#",
+        height=150,
+        label_visibility="collapsed",
+    )
 
+with col_btn:
+    st.write("##")  # Espaciador para alinear el botón con el área de texto
+    procesar = st.button("Listo")
+
+# --- PROCESAMIENTO ---
 if procesar and entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
 
@@ -142,7 +149,7 @@ if procesar and entrada:
                 f_arka_n += " " * ancho
                 f_ira_n += nota_t.ljust(ancho)
                 f_arka_num += " " * ancho
-                f_ira_num += num_t.ljust(ancho)
+                f_ira_num += nota_t.ljust(ancho)
             else:
                 f_arka_n += f"[{nota_t}?] ".ljust(ancho)
                 f_ira_n += " " * ancho
@@ -157,4 +164,4 @@ if procesar and entrada:
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
     st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
 elif procesar and not entrada:
-    st.warning("⚠️ Por favor, ingresa una melodía antes de procesar.")
+    st.warning("⚠️ Ingresa una melodía.")
