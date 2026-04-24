@@ -38,6 +38,7 @@ TABLATURA = {
     "Re0": "7",
     "Mi0": "6",
     "Fa#0": "6",
+    "Si0": "7",
     "Sol": "5",
     "La": "5",
     "Si": "4",
@@ -48,23 +49,39 @@ TABLATURA = {
     "Sol2": "2",
     "La2": "1",
     "Si2": "1",
-    "Si0": "7",
 }
 NOTAS_ARKA = ["Re0", "Fa#0", "La", "Do", "Mi", "Sol2", "Si2"]
 NOTAS_IRA = ["Si0", "Mi0", "Sol", "Si", "Re", "Fa#", "La2"]
 
 # --- INTERFAZ WEB ---
-st.set_page_config(page_title="Transpositor Siku", page_icon="🎶")
-st.title("🎶 Transpositor de Sikus (Arka/Ira)")
-st.subheader("Prof. Pablo Olivero - Liceo San José del Carmen")
+st.set_page_config(page_title="SikuTab", page_icon="🎶")
+st.title("🎶 SikuTab: Transpositor Arka/Ira")
+st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
-col1, col2 = st.columns(2)
+# --- SECCIÓN DE CONFIGURACIÓN ---
+col1, col2, col3 = st.columns([2, 2, 3])
+
 with col1:
     original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
+
 with col2:
     modo = st.radio("Modo", ["Mayor", "Menor"])
 
-entrada = st.text_area("Escribe la melodía original (ej: Do Re Mi Fa#)", height=100)
+with col3:
+    st.info("""
+    **Guía de Octavas:**
+    - **Agudo:** Agrega un **2** (ej: `do2`).
+    - **Grave:** Agrega un **0** (ej: `do0`).
+
+    *Límites del Siku:*
+    - Re0 a Fa#0
+    - Sol a Fa#
+    - Sol2 a Si2
+    """)
+
+entrada = st.text_area(
+    "Escribe la melodía aquí:", placeholder="Ejemplo: do do2 sol la re0 mi0", height=100
+)
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
@@ -99,12 +116,16 @@ if entrada:
                 f_ira_n += " " * ancho
                 f_arka_num += num_t.ljust(ancho)
                 f_ira_num += " " * ancho
-            else:
+            elif nota_t in NOTAS_IRA:
                 f_arka_n += " " * ancho
                 f_ira_n += nota_t.ljust(ancho)
                 f_arka_num += " " * ancho
                 f_ira_num += num_t.ljust(ancho)
+            else:
+                f_arka_n += f"[{nota_t}?] ".ljust(ancho)
+                f_ira_n += " " * ancho
+                f_arka_num += "? ".ljust(ancho)
+                f_ira_num += " " * ancho
 
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
-    # Usamos formato de código para mantener las columnas alineadas
-    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 20}\n{f_arka_num}\n{f_ira_num}")
+    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 25}\n{f_arka_num}\n{f_ira_num}")
