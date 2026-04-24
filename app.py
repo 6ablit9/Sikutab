@@ -1,32 +1,44 @@
+import streamlit as st
 import os
 
-import streamlit as st
+# --- CONFIGURACIÓN E INYECCIÓN DE DISEÑO (Círculos) ---
+st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
+
+st.markdown("""
+    <style>
+    /* Estilo para convertir botones en círculos de Siku */
+    .stButton > button {
+        border-radius: 50% !important;
+        width: 80px !important;
+        height: 80px !important;
+        border: 2px solid #555 !important;
+        background-color: #2e2e2e !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 14px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+    .stButton > button:hover {
+        border-color: #9b59b6 !important;
+        color: #9b59b6 !important;
+    }
+    /* Contenedor para centrar la Ira (6 tubos) bajo el Arka (7 tubos) */
+    .ira-container {
+        padding-left: 45px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- LÓGICA DE ESCALAS ---
-NOTAS_MUSICALES = [
-    "Do",
-    "Do#",
-    "Re",
-    "Re#",
-    "Mi",
-    "Fa",
-    "Fa#",
-    "Sol",
-    "Sol#",
-    "La",
-    "La#",
-    "Si",
-]
+NOTAS_MUSICALES = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"]
 BEMOLES = {"Reb": "Do#", "Mib": "Re#", "Solb": "Fa#", "Lab": "Sol#", "Sib": "La#"}
-
 
 def generar_escala(tonica, modo):
     pasos = [2, 2, 1, 2, 2, 2, 1] if modo == "mayor" else [2, 1, 2, 2, 1, 2, 2]
-    t_limpia = tonica.capitalize().replace(" ", "")
-    t_limpia = BEMOLES.get(t_limpia, t_limpia)
-    if t_limpia not in NOTAS_MUSICALES:
-        return None
-    idx = NOTAS_MUSICALES.index(t_limpia)
+    idx = NOTAS_MUSICALES.index(BEMOLES.get(tonica, tonica))
     escala = []
     actual = idx
     for p in pasos:
@@ -34,140 +46,65 @@ def generar_escala(tonica, modo):
         actual += p
     return escala
 
+# --- DISPOSICIÓN SEGÚN IMAGEN ---
+# Arka (7 tubos): Si2 a Re0 (de izquierda a derecha según tu diagrama)
+ARKA = ["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]
+# Ira (6 tubos): La2 a Mi0
+IRA  = ["La2", "Fa#", "Re", "Si", "Sol", "Mi0"]
 
-# --- REPARTO ESTÁNDAR (Coincide con tus archivos) ---
-ARKA = ["Re0", "Fa#0", "La", "Do", "Mi", "Sol2", "Si2"]
-IRA = ["Mi0", "Sol", "Si", "Re", "Fa#", "La2"]
 TABLATURA = {
-    "Re0": "7",
-    "Mi0": "6",
-    "Fa#0": "6",
-    "Sol": "5",
-    "La": "5",
-    "Si": "4",
-    "Do": "4",
-    "Re": "3",
-    "Mi": "3",
-    "Fa#": "2",
-    "Sol2": "2",
-    "La2": "1",
-    "Si2": "1",
+    "Re0": "7", "Mi0": "6", "Fa#0": "6", "Si": "4", "Do": "4", "Re": "3", "Mi": "3",
+    "Fa#": "2", "Sol": "5", "La": "5", "Sol2": "2", "La2": "1", "Si2": "1"
 }
 
 # --- INTERFAZ ---
-st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 st.title("🎶 SikuTab: Transpositor y Teclado")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
-# --- CONFIGURACIÓN ---
 col_t, col_m = st.columns([1, 1])
 with col_t:
     original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# --- GUÍA DESPLEGABLE ---
-with st.expander("📖 Guía de Octavas y Registro Real"):
-    st.markdown("### Cómo escribir:")
-    st.markdown(
-        "- <span style='color: #9b59b6;'>**Agudos:**</span> Agrega un **2** (ej: `sol2`).",
-        unsafe_allow_html=True,
-    )
-    st.markdown("- **Medios:** Solo la nota (ej: `sol`).")
-    st.markdown(
-        "- <span style='color: #e67e22;'>**Graves:**</span> Agrega un **0** (ej: `re0`).",
-        unsafe_allow_html=True,
-    )
-    st.markdown("### Notas en el Siku:")
-    st.markdown(
-        "<span style='color: #9b59b6;'>**AGUDOS:** Sol2, La2, Si2</span>",
-        unsafe_allow_html=True,
-    )
-    st.markdown("**MEDIOS:** Sol, La, Si, Do, Re, Mi, Fa#")
-    st.markdown(
-        "<span style='color: #e67e22;'>**GRAVES:** Re0, Mi0, Fa#0</span>",
-        unsafe_allow_html=True,
-    )
-
-# --- TECLADO VIRTUAL ---
-st.subheader("🎹 Teclado de Referencia")
-
+# --- TECLADO VISUAL (Círculos) ---
+st.subheader("🎹 Mapa de Tubos")
 
 def reproducir(nota):
     archivo = f"{nota}.wav"
     if os.path.exists(archivo):
-        st.audio(archivo, format="audio/wav")
+        st.audio(archivo, format="audio/wav", autoplay=True)
     else:
         st.error(f"Falta: {archivo}")
 
+# Fila ARKA (7 columnas)
+cols_arka = st.columns(7)
+for i, n in enumerate(ARKA):
+    with cols_arka[i]:
+        if st.button(n, key=f"a_{n}"):
+            reproducir(n)
 
-c_arka, c_ira = st.columns(2)
-with c_arka:
-    st.markdown("<span style='color: #9b59b6;'>**ARKA**</span>", unsafe_allow_html=True)
-    cols = st.columns(len(ARKA))
-    for i, n in enumerate(ARKA):
-        if cols[i].button(n, key=f"a_{n}"):
+# Fila IRA (6 columnas, usamos un contenedor para desplazar)
+st.markdown('<div class="ira-container">', unsafe_allow_html=True)
+cols_ira = st.columns([0.5, 1, 1, 1, 1, 1, 1, 0.5]) # Columnas de relleno para centrar
+for i, n in enumerate(IRA):
+    with cols_ira[i+1]: # Empezamos en la segunda columna
+        if st.button(n, key=f"i_{n}"):
             reproducir(n)
-with c_ira:
-    st.markdown("<span style='color: #e67e22;'>**IRA**</span>", unsafe_allow_html=True)
-    cols = st.columns(len(IRA))
-    for i, n in enumerate(IRA):
-        if cols[i].button(n, key=f"i_{n}"):
-            reproducir(n)
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("---")
 
-# --- ENTRADA (ENTER PARA PROCESAR) ---
-entrada = st.text_input(
-    "Escribe la melodía aquí y presiona ENTER:", placeholder="Ej: re0 mi0 sol la do2"
-)
+# --- ENTRADA Y RESULTADO ---
+entrada = st.text_input("Escribe la melodía aquí:", placeholder="Ej: re0 mi0 sol la do2")
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
-    dest, nombre_final = (
-        (["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"], "SOL MAYOR")
-        if modo == "Mayor"
-        else (["Mi", "Fa#", "Sol", "La", "Si", "Do", "Re"], "MI MENOR")
-    )
+    dest = ["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"] if modo == "Mayor" else ["Mi", "Fa#", "Sol", "La", "Si", "Do", "Re"]
 
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
-    f_arka_n, f_ira_n = "ARKA (Notas):  ", "IRA  (Notas):  "
-    f_arka_num, f_ira_num = "ARKA (Num):    ", "IRA  (Num):    "
+    f_arka_n, f_ira_n, f_arka_num, f_ira_num = "ARKA (Notas):  ", "IRA  (Notas):  ", "ARKA (Num):    ", "IRA  (Num):    "
     ancho = 8
 
     for nota_raw in notas_usuario:
-        sufijo = (
-            "0" if nota_raw.endswith("0") else ("2" if nota_raw.endswith("2") else "")
-        )
-        n_nombre = nota_raw[:-1] if sufijo else nota_raw
-        n_limpia = "".join(
-            [c for c in n_nombre if c.isalpha() or c == "#"]
-        ).capitalize()
-        n_limpia = BEMOLES.get(n_limpia, n_limpia)
-
-        if n_limpia in ref_original:
-            nota_t = dest[ref_original.index(n_limpia)] + sufijo
-            num_t = TABLATURA.get(nota_t, "?")
-            if nota_t in ARKA:
-                f_arka_n += nota_t.ljust(ancho)
-                f_ira_n += " " * ancho
-                f_arka_num += num_t.ljust(ancho)
-                f_ira_num += " " * ancho
-            elif nota_t in IRA:
-                f_arka_n += " " * ancho
-                f_ira_n += nota_t.ljust(ancho)
-                f_arka_num += " " * ancho
-                f_ira_num += num_t.ljust(ancho)
-            else:
-                f_arka_n += f"[{nota_t}?] ".ljust(ancho)
-                f_ira_n += " " * ancho
-                f_arka_num += "? ".ljust(ancho)
-                f_ira_num += " " * ancho
-        else:
-            f_arka_n += "??".ljust(ancho)
-            f_ira_n += " " * ancho
-            f_arka_num += "??".ljust(ancho)
-            f_ira_num += " " * ancho
-
-    st.markdown(f"### 🎼 Resultado en {nombre_final}")
-    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
+        sufijo = "0" if nota_raw.endswith
