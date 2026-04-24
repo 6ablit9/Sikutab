@@ -93,10 +93,11 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
         unsafe_allow_html=True,
     )
 
-# --- ENTRADA DE NOTAS (Estilo Chat / Enter para enviar) ---
-st.write("---")
-entrada = st.chat_input(
-    "Escribe la melodía aquí y presiona ENTER (Shift+Enter para nueva línea)"
+# --- ENTRADA DE TEXTO ÚNICA (ENTER PARA PROCESAR) ---
+entrada = st.text_input(
+    "Escribe la melodía aquí:",
+    placeholder="Ej: sol la si do re mi fa# (Presiona Enter para transponer)",
+    label_visibility="collapsed",
 )
 
 # --- PROCESAMIENTO ---
@@ -150,9 +151,6 @@ if entrada:
             f_ira_n += " " * ancho
             f_arka_num += "??".ljust(ancho)
             f_ira_num += " " * ancho
-
-    # Mostrar la entrada del usuario para referencia
-    st.write(f"**Melodía procesada:** _{entrada}_")
 
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
     st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * 30}\n{f_arka_num}\n{f_ira_num}")
