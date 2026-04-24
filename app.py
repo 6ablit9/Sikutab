@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 
 # --- LÓGICA DE ESCALAS ---
@@ -33,7 +35,9 @@ def generar_escala(tonica, modo):
     return escala
 
 
-# --- REPARTO Y TABLATURA ---
+# --- REPARTO ESTÁNDAR (Coincide con tus archivos) ---
+ARKA = ["Re0", "Fa#0", "La", "Do", "Mi", "Sol2", "Si2"]
+IRA = ["Mi0", "Sol", "Si", "Re", "Fa#", "La2"]
 TABLATURA = {
     "Re0": "7",
     "Mi0": "6",
@@ -49,13 +53,10 @@ TABLATURA = {
     "La2": "1",
     "Si2": "1",
 }
-NOTAS_ARKA = ["Re0", "Fa#0", "La", "Do", "Mi", "Sol2", "Si2"]
-NOTAS_IRA = ["Mi0", "Sol", "Si", "Re", "Fa#", "La2"]
 
-# --- INTERFAZ WEB ---
+# --- INTERFAZ ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
-
-st.title("🎶 SikuTab: Transpositor Arka/Ira")
+st.title("🎶 SikuTab: Transpositor y Teclado")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
 # --- CONFIGURACIÓN ---
@@ -66,23 +67,18 @@ with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
 # --- GUÍA DESPLEGABLE ---
-with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
-    st.markdown("### Cómo escribir las notas:")
+with st.expander("📖 Guía de Octavas y Registro Real"):
+    st.markdown("### Cómo escribir:")
     st.markdown(
-        "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`, `la2`).",
+        "- <span style='color: #9b59b6;'>**Agudos:**</span> Agrega un **2** (ej: `sol2`).",
         unsafe_allow_html=True,
     )
-    st.markdown("- **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).")
+    st.markdown("- **Medios:** Solo la nota (ej: `sol`).")
     st.markdown(
-        "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`, `mi0`).",
+        "- <span style='color: #e67e22;'>**Graves:**</span> Agrega un **0** (ej: `re0`).",
         unsafe_allow_html=True,
     )
-
-    st.info(
-        "**⚠️ Adaptación:** Si aparece **[?]**, ajusta la octava en la entrada original."
-    )
-
-    st.markdown("### 🎼 Notas disponibles en el Siku:")
+    st.markdown("### Notas en el Siku:")
     st.markdown(
         "<span style='color: #9b59b6;'>**AGUDOS:** Sol2, La2, Si2</span>",
         unsafe_allow_html=True,
@@ -93,28 +89,50 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku"):
         unsafe_allow_html=True,
     )
 
-# --- ENTRADA DE TEXTO ÚNICA (ENTER PARA PROCESAR) ---
+# --- TECLADO VIRTUAL ---
+st.subheader("🎹 Teclado de Referencia")
+
+
+def reproducir(nota):
+    archivo = f"{nota}.wav"
+    if os.path.exists(archivo):
+        st.audio(archivo, format="audio/wav")
+    else:
+        st.error(f"Falta: {archivo}")
+
+
+c_arka, c_ira = st.columns(2)
+with c_arka:
+    st.markdown("<span style='color: #9b59b6;'>**ARKA**</span>", unsafe_allow_html=True)
+    cols = st.columns(len(ARKA))
+    for i, n in enumerate(ARKA):
+        if cols[i].button(n, key=f"a_{n}"):
+            reproducir(n)
+with c_ira:
+    st.markdown("<span style='color: #e67e22;'>**IRA**</span>", unsafe_allow_html=True)
+    cols = st.columns(len(IRA))
+    for i, n in enumerate(IRA):
+        if cols[i].button(n, key=f"i_{n}"):
+            reproducir(n)
+
+st.write("---")
+
+# --- ENTRADA (ENTER PARA PROCESAR) ---
 entrada = st.text_input(
-    "Escribe la melodía aquí:",
-    placeholder="Ej: sol la si do re mi fa# (Presiona Enter para transponer)",
-    label_visibility="collapsed",
+    "Escribe la melodía aquí y presiona ENTER:", placeholder="Ej: re0 mi0 sol la do2"
 )
 
-# --- PROCESAMIENTO ---
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
-
-    if modo == "Mayor":
-        dest = ["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"]
-        nombre_final = "SOL MAYOR"
-    else:
-        dest = ["Mi", "Fa#", "Sol", "La", "Si", "Do", "Re"]
-        nombre_final = "MI MENOR"
+    dest, nombre_final = (
+        (["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"], "SOL MAYOR")
+        if modo == "Mayor"
+        else (["Mi", "Fa#", "Sol", "La", "Si", "Do", "Re"], "MI MENOR")
+    )
 
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
     f_arka_n, f_ira_n = "ARKA (Notas):  ", "IRA  (Notas):  "
     f_arka_num, f_ira_num = "ARKA (Num):    ", "IRA  (Num):    "
-
     ancho = 8
 
     for nota_raw in notas_usuario:
@@ -130,13 +148,12 @@ if entrada:
         if n_limpia in ref_original:
             nota_t = dest[ref_original.index(n_limpia)] + sufijo
             num_t = TABLATURA.get(nota_t, "?")
-
-            if nota_t in NOTAS_ARKA:
+            if nota_t in ARKA:
                 f_arka_n += nota_t.ljust(ancho)
                 f_ira_n += " " * ancho
                 f_arka_num += num_t.ljust(ancho)
                 f_ira_num += " " * ancho
-            elif nota_t in NOTAS_IRA:
+            elif nota_t in IRA:
                 f_arka_n += " " * ancho
                 f_ira_n += nota_t.ljust(ancho)
                 f_arka_num += " " * ancho
