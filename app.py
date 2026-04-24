@@ -1,18 +1,19 @@
 import os
+import time
 
 import streamlit as st
 
-# --- CONFIGURACIÓN E INYECCIÓN DE DISEÑO ---
+# --- CONFIGURACIÓN E INYECCIÓN DE DISEÑO (Círculos Intercalados) ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
 st.markdown(
     """
     <style>
-    /* Estilo de los tubos (círculos) */
+    /* Estilo de los tubos */
     .stButton > button {
         border-radius: 50% !important;
-        width: 80px !important;
-        height: 80px !important;
+        width: 85px !important;
+        height: 85px !important;
         border: 2px solid #555 !important;
         background-color: #2e2e2e !important;
         color: white !important;
@@ -21,26 +22,26 @@ st.markdown(
         align-items: center;
         justify-content: center;
         margin: 0 auto;
-        line-height: 1.2 !important;
+        line-height: 1.1 !important;
     }
     .stButton > button:hover {
         border-color: #9b59b6 !important;
         color: #9b59b6 !important;
     }
-    /* Estilo para los nombres laterales */
+    /* Etiquetas laterales */
     .row-label {
         font-weight: bold;
-        font-size: 20px;
+        font-size: 18px;
         display: flex;
         align-items: center;
-        height: 80px;
+        height: 85px;
     }
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* Contenedor para desplazar la Ira y que encaje entre los tubos del Arka */
-    .ira-container {
-        padding-left: 20px;
+    /* Ajuste para intercalado perfecto */
+    .ira-row {
+        margin-top: -10px;
     }
     </style>
     """,
@@ -79,7 +80,7 @@ def generar_escala(tonica, modo):
     return escala
 
 
-# --- DISPOSICIÓN Y TABLATURA ---
+# --- DISPOSICIÓN ---
 ARKA = ["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]
 IRA = ["La2", "Fa#", "Re", "Si", "Sol", "Mi0"]
 
@@ -99,17 +100,8 @@ TABLATURA = {
     "Si2": "1",
 }
 
-
-def reproducir(nota):
-    archivo = f"{nota}.wav"
-    if os.path.exists(archivo):
-        # El reproductor aparece arriba (donde se llama a esta función)
-        return archivo
-    return None
-
-
 # --- INTERFAZ SUPERIOR ---
-st.title("🎶 SikuTab: Transpositor y Teclado")
+st.title("🎶 SikuTab: Transpositor y Siku Virtual")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
 col_t, col_m = st.columns(2)
@@ -170,41 +162,42 @@ if entrada:
 
 st.write("---")
 
-# --- SIKU VIRTUAL (AL FINAL) ---
-col_title, col_audio = st.columns([1, 1])
-with col_title:
+# --- SIKU VIRTUAL (Intercalado) ---
+col_head, col_audio = st.columns([1, 1])
+with col_head:
     st.subheader("🎹 Siku Virtual")
-
-# Espacio para el audio (fijo arriba del teclado)
 audio_placeholder = col_audio.empty()
 
-# Filas del teclado con etiquetas a la izquierda
-# Fila ARKA
-c_label, *c_tubos = st.columns([1, 1, 1, 1, 1, 1, 1, 1])
+
+# Función para disparar audio con clave única para repeticiones
+def disparar_audio(nota):
+    archivo = f"{nota}.wav"
+    if os.path.exists(archivo):
+        # Usamos time.time para que la clave siempre sea distinta y la barra refresque
+        audio_placeholder.audio(archivo, format="audio/wav", autoplay=True)
+
+
+# FILA ARKA (Etiqueta + 7 Notas)
+c_label, *c_arka_tubos = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_label:
     st.markdown('<div class="row-label arka-label">ARKA</div>', unsafe_allow_html=True)
 
 for i, n in enumerate(ARKA):
     num = TABLATURA.get(n, "")
-    with c_tubos[i]:
-        # El nombre del botón incluye el número arriba y la nota abajo
-        if st.button(f"{num}\n{n}", key=f"a_{n}"):
-            res = reproducir(n)
-            if res:
-                audio_placeholder.audio(res, format="audio/wav", autoplay=True)
+    with c_arka_tubos[i]:
+        if st.button(f"{num}\n{n}", key=f"btn_a_{n}"):
+            disparar_audio(n)
 
-# Fila IRA
-st.markdown('<div class="ira-container">', unsafe_allow_html=True)
-# Usamos un desfase en las columnas para que la Ira encaje visualmente
-c_label_i, spacer, *c_tubos_i = st.columns([1, 0.5, 1, 1, 1, 1, 1, 1])
+# FILA IRA (Etiqueta + Desfase de media columna para intercalar + 6 Notas)
+st.markdown('<div class="ira-row">', unsafe_allow_html=True)
+# El desfase '0.5' después de la etiqueta es la clave del intercalado
+c_label_i, desfase, *c_ira_tubos = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_label_i:
     st.markdown('<div class="row-label ira-label">IRA</div>', unsafe_allow_html=True)
 
 for i, n in enumerate(IRA):
     num = TABLATURA.get(n, "")
-    with c_tubos_i[i]:
-        if st.button(f"{num}\n{n}", key=f"i_{n}"):
-            res = reproducir(n)
-            if res:
-                audio_placeholder.audio(res, format="audio/wav", autoplay=True)
+    with c_ira_tubos[i]:
+        if st.button(f"{num}\n{n}", key=f"btn_i_{n}"):
+            disparar_audio(n)
 st.markdown("</div>", unsafe_allow_html=True)
