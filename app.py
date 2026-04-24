@@ -96,13 +96,13 @@ if entrada:
 
             if nota_t in NOTAS_ARKA:
                 f_arka_n += nota_t.ljust(ancho)
-                f_ira_n += "&nbsp;" * ancho
+                f_ira_n += " " * ancho
                 f_arka_num += num_t.ljust(ancho)
-                f_ira_num += "&nbsp;" * ancho
+                f_ira_num += " " * ancho
             else:
-                f_arka_n += "&nbsp;" * ancho
+                f_arka_n += " " * ancho
                 f_ira_n += nota_t.ljust(ancho)
-                f_arka_num += "&nbsp;" * ancho
+                f_arka_num += " " * ancho
                 f_ira_num += num_t.ljust(ancho)
 
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
