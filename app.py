@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: CÍRCULOS Y DISEÑO ---
+# --- CSS: CÍRCULOS TOCÁNDOSE POR 1 PIXEL ---
 st.markdown(
     """
     <style>
@@ -31,8 +31,11 @@ st.markdown(
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* Gap ligeramente aumentado para descompresión visual */
-    [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 14px !important; }
+    /* El secreto: Gap de 1px para que apenas se toquen */
+    [data-testid="stHorizontalBlock"] {
+        width: fit-content !important;
+        gap: 1px !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -46,22 +49,18 @@ const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
     const tag = e.target.tagName.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-
     const key = e.key.toLowerCase();
     const allBtns = doc.querySelectorAll('button');
     const map = {
         '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6,
         'q': 7, 'w': 8, 'e': 9, 'r': 10, 't': 11, 'y': 12
     };
-
     if (map[key] !== undefined) {
         const sikuBtns = Array.from(allBtns).filter(b =>
             b.innerText.includes('\\n') ||
             (b.innerText.length < 10 && /\\d/.test(b.innerText))
         );
-        if (sikuBtns[map[key]]) {
-            sikuBtns[map[key]].click();
-        }
+        if (sikuBtns[map[key]]) { sikuBtns[map[key]].click(); }
     }
 });
 </script>
@@ -96,13 +95,13 @@ def tocar(nota):
     st.session_state.audio_file = f"{nota}.wav"
 
 
-# --- INTERFAZ SUPERIOR ---
+# --- INTERFAZ ---
 st.title("🎶 SikuTab: Transpositor y Teclado")
-# (Lógica de escalas y entrada de texto omitida por brevedad, mantener igual)
+# (Lógica de escalas y entrada de texto igual que antes...)
 
 st.write("---")
 
-# --- SIKU VIRTUAL ---
+# --- SIKU VIRTUAL (ZIGZAG MILIMÉTRICO) ---
 col_head, col_audio = st.columns([1, 1])
 with col_head:
     st.subheader("🎹 Siku Virtual")
@@ -116,11 +115,12 @@ if st.session_state.audio_file:
         st.session_state.audio_file = None
         st.rerun()
 
-# --- FILAS CON SEPARACIÓN AJUSTADA ---
-# Arka: Base
-layout_arka = [1.5, 1, 1, 1, 1, 1, 1, 1, 2]
-# Ira: Aumentamos el desfase inicial a 0.7 para separar un poco más del borde
-layout_ira = [1.5, 0.7, 1, 1, 1, 1, 1, 1, 2.3]
+# --- FILAS CON ALINEACIÓN MATEMÁTICA ---
+# Para que se toquen por 1px, las columnas de notas deben tener el mismo peso (1)
+# Arka: 1.5 de etiqueta + 7 notas
+layout_arka = [1.5, 1, 1, 1, 1, 1, 1, 1]
+# Ira: 1.5 de etiqueta + 0.5 de DESFASE EXACTO + 6 notas
+layout_ira = [1.5, 0.5, 1, 1, 1, 1, 1, 1]
 
 # FILA ARKA
 c_arka = st.columns(layout_arka)
@@ -139,6 +139,7 @@ with c_ira[0]:
     st.markdown(
         '<div class="row-label ira-label">IRA (Q-Y)</div>', unsafe_allow_html=True
     )
+# c_ira[1] es el desfase de 0.5 (media nota) para el zigzag perfecto
 for i, n in enumerate(IRA):
     num = TABLATURA.get(n, "")
     with c_ira[i + 2]:
