@@ -7,12 +7,22 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: ESTÉTICA ORIGINAL ---
+# --- CSS: MODO OSCURO FORZADO Y ESTÉTICA ORIGINAL ---
 st.markdown(
     """
     <style>
-    .stApp { background-color: #1e1e1e; color: #f0f0f0; }
+    /* Forzar modo oscuro en toda la app */
+    .stApp {
+        background-color: #1e1e1e !important;
+        color: #f0f0f0 !important;
+    }
 
+    /* Ajuste de textos de labels para que siempre sean visibles en oscuro */
+    label, .stMarkdown, p, h1, h2, h3, h4, h5, h6, span {
+        color: #f0f0f0 !important;
+    }
+
+    /* Botones Circulares del Siku */
     .stButton > button {
         border-radius: 50% !important;
         width: 75px !important;
@@ -28,12 +38,17 @@ st.markdown(
         font-size: 13px !important;
         transition: all 0.2s ease;
     }
-    .stButton > button:hover { border-color: #9b59b6 !important; color: #9b59b6 !important; background-color: #3a3a3a !important; }
+    .stButton > button:hover {
+        border-color: #9b59b6 !important;
+        color: #9b59b6 !important;
+        background-color: #3a3a3a !important;
+    }
 
-    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; color: white; }
-    .arka-label { color: #9b59b6; }
-    .ira-label { color: #e67e22; }
+    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; color: white !important; }
+    .arka-label { color: #9b59b6 !important; }
+    .ira-label { color: #e67e22 !important; }
 
+    /* Cuadro de código verde terminal */
     div[data-testid="stCodeBlock"] pre {
         background-color: #000000 !important;
         color: #00ff00 !important;
@@ -42,10 +57,46 @@ st.markdown(
 
     audio { height: 30px; width: 220px; }
 
+    /* Espaciado de botones */
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
+
+    /* Forzar el fondo oscuro en los inputs */
+    .stTextInput > div > div > input {
+        background-color: #2e2e2e !important;
+        color: white !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
+)
+
+# --- JAVASCRIPT: DETECTOR DE TECLAS ---
+components.html(
+    """
+<script>
+const doc = window.parent.document;
+doc.addEventListener('keydown', function(e) {
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+    const key = e.key.toLowerCase();
+    const allBtns = doc.querySelectorAll('button');
+
+    const map = {
+        '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6,
+        'q':7, 'w':8, 'e':9, 'r':10, 't':11, 'y':12
+    };
+
+    if (map[key] !== undefined) {
+        const sikuBtns = Array.from(allBtns).filter(b => b.innerText.includes('\\n'));
+        if (sikuBtns[map[key]]) {
+            sikuBtns[map[key]].click();
+        }
+    }
+});
+</script>
+""",
+    height=0,
 )
 
 # --- LÓGICA DE ESCALAS ---
@@ -117,7 +168,7 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# --- GUÍA DESPLEGABLE (Ejemplos Re0 a Si2) ---
+# --- GUÍA DESPLEGABLE ---
 with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=False):
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
@@ -164,7 +215,7 @@ if entrada:
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
     f_arka_n, f_ira_n = "ARKA (Notas):  ", "IRA  (Notas):  "
     f_arka_num, f_ira_num = "ARKA (Num):    ", "IRA  (Num):    "
-    ancho = 9
+    ancho = 10
 
     for nota_raw in notas_usuario:
         sufijo = (
@@ -177,7 +228,8 @@ if entrada:
         n_limpia = BEMOLES.get(n_limpia, n_limpia)
 
         if n_limpia in ref_original:
-            nota_t = dest[ref_original.index(n_limpia)] + sufijo
+            idx = ref_original.index(n_limpia)
+            nota_t = dest[idx] + sufijo
             num_t = TABLATURA.get(nota_t, "?")
 
             if nota_t in NOTAS_ARKA:
