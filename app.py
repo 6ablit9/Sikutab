@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: COMPRESIÓN Y DISEÑO DE TUBOS ---
+# --- CSS: COMPRESIÓN SIN SUPERPOSICIÓN ---
 st.markdown(
     """
     <style>
@@ -32,17 +32,17 @@ st.markdown(
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* FUERZA BRUTA: Pega los círculos anulando el estiramiento de Streamlit */
+    /* Gap de 4px: Suficiente para que no se superpongan pero sigan pegados */
     [data-testid="stHorizontalBlock"] {
         width: fit-content !important;
-        gap: 2px !important;
+        gap: 4px !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS (SÓLO SI NO ESCRIBE) ---
+# --- JAVASCRIPT: DETECTOR DE TECLAS ---
 components.html(
     """
 <script>
@@ -200,10 +200,8 @@ if st.session_state.audio_file:
             st.session_state.audio_file = None
             st.rerun()
 
-# --- FILAS CON ALINEACIÓN SIMÉTRICA CORREGIDA ---
-
-# ARKA: Label(1.5) + 7 notas(peso 1 cada una)
-c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
+# ARKA: Peso 1.8 para la etiqueta y 1.2 para cada nota para evitar colapso
+c_arka = st.columns([1.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2])
 with c_arka[0]:
     st.markdown(
         '<div class="row-label arka-label">ARKA (1-7)</div>', unsafe_allow_html=True
@@ -213,15 +211,13 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# IRA: Label(1.5) + Aire Desfase(3.5) + 6 notas(peso 1 cada una)
-# Esto asegura que la IRA tenga la misma separación que el ARKA y se expanda a la izquierda.
-c_ira = st.columns([1.5, 3.5, 1, 1, 1, 1, 1, 1])
+# IRA: Desfase de 4.2 para alinear el centro (Do) con el espacio Re/Si
+c_ira = st.columns([1.8, 4.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2])
 with c_ira[0]:
     st.markdown(
         '<div class="row-label ira-label">IRA (Q-Y)</div>', unsafe_allow_html=True
     )
 
-# El índice i+2 corresponde a saltar el label [0] y el aire de desfase [1]
 for i, n in enumerate(IRA):
     num = TABLATURA.get(n, "")
     with c_ira[i + 2]:
