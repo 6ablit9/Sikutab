@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: ESTÉTICA Y COMPRESIÓN ---
+# --- CSS: ESTÉTICA Y ALINEACIÓN ---
 st.markdown(
     """
     <style>
@@ -27,34 +27,59 @@ st.markdown(
         justify-content: center;
         line-height: 1.1 !important;
         font-size: 13px !important;
+        transition: all 0.2s ease;
     }
+    .stButton > button:hover { border-color: #9b59b6 !important; color: #9b59b6 !important; background-color: #3a3a3a !important; }
 
-    /* Cuadro de código verde compacto */
+    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; color: white; }
+    .arka-label { color: #9b59b6; }
+    .ira-label { color: #e67e22; }
+
+    /* Cuadro de código verde tipo terminal */
     div[data-testid="stCodeBlock"] pre {
         background-color: #000000 !important;
         color: #00ff00 !important;
-        padding: 10px !important;
-        font-size: 16px !important;
+        border: 1px solid #333;
     }
 
-    audio { height: 30px; width: 180px; filter: invert(100%); }
+    /* Reproductor pequeño y discreto */
+    audio {
+        height: 30px;
+        width: 180px;
+        filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+    }
+
+    /* Compresión de espacio entre botones para zigzag */
+    [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS ---
+# --- JAVASCRIPT: DETECTOR DE TECLAS (1-7 y Q-Y) ---
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
-    if (e.target.tagName.toLowerCase() === 'input') return;
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+
     const key = e.key.toLowerCase();
-    const map = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'q':7,'w':8,'e':9,'r':10,'t':11,'y':12};
+    const map = {
+        '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6,
+        'q':7, 'w':8, 'e':9, 'r':10, 't':11, 'y':12
+    };
+
     if (map[key] !== undefined) {
-        const btns = Array.from(doc.querySelectorAll('button')).filter(b => b.innerText.includes('\\n'));
-        if (btns[map[key]]) { e.preventDefault(); btns[map[key]].click(); }
+        const allBtns = Array.from(doc.querySelectorAll('button'));
+        // Filtramos solo los botones que tienen el formato de nota (con salto de línea)
+        const sikuBtns = allBtns.filter(b => b.innerText.includes('\\n'));
+
+        if (sikuBtns[map[key]]) {
+            e.preventDefault();
+            sikuBtns[map[key]].click();
+        }
     }
 });
 </script>
@@ -62,7 +87,7 @@ doc.addEventListener('keydown', function(e) {
     height=0,
 )
 
-# --- LÓGICA MUSICAL ---
+# --- LÓGICA DE ESCALAS Y TRANSPOSICIÓN ---
 NOTAS_MUSICALES = [
     "Do",
     "Do#",
@@ -83,6 +108,8 @@ BEMOLES = {"Reb": "Do#", "Mib": "Re#", "Solb": "Fa#", "Lab": "Sol#", "Sib": "La#
 def generar_escala(tonica, modo):
     pasos = [2, 2, 1, 2, 2, 2, 1] if modo == "mayor" else [2, 1, 2, 2, 1, 2, 2]
     t_limpia = BEMOLES.get(tonica.capitalize(), tonica.capitalize())
+    if t_limpia not in NOTAS_MUSICALES:
+        return None
     idx = NOTAS_MUSICALES.index(t_limpia)
     escala = []
     actual = idx
@@ -92,6 +119,7 @@ def generar_escala(tonica, modo):
     return escala
 
 
+# --- TABLATURA Y REGISTROS ---
 TABLATURA = {
     "Re0": "7",
     "Mi0": "6",
@@ -108,6 +136,7 @@ TABLATURA = {
     "Si2": "1",
 }
 NOTAS_ARKA = ["Re0", "Fa#0", "La", "Do", "Mi", "Sol2", "Si2"]
+NOTAS_IRA = ["Mi0", "Sol", "Si", "Re", "Fa#", "La2"]
 
 if "audio_file" not in st.session_state:
     st.session_state.audio_file = None
@@ -117,23 +146,30 @@ def tocar(nota):
     st.session_state.audio_file = f"{nota}.wav"
 
 
-# --- INTERFAZ ---
-st.title("🎶 SikuTab")
+# --- INTERFAZ SUPERIOR ---
+st.title("🎶 SikuTab: Transpositor Arka/Ira")
+st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
+
 col_t, col_m = st.columns([1, 1])
 with col_t:
-    original_tonica = st.selectbox("Tonalidad", NOTAS_MUSICALES)
+    original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-with st.expander("📖 Guía rápida", expanded=False):
-    st.write("Usa '2' para agudos y '0' para graves. Ejemplo: sol la si do2")
+with st.expander("📖 Guía de Octavas", expanded=False):
+    st.write(
+        "Escribe notas normales para registro medio, agrega '2' para agudos y '0' para graves."
+    )
 
 st.write("---")
 
-entrada = st.text_input("📝 Escribe la melodía:", placeholder="Ej: sol la si do2")
+# ENTRADA DE TEXTO (1 SOLA LÍNEA)
+entrada = st.text_input(
+    "📝 Escribe la melodía aquí (presiona Enter):", placeholder="Ej: sol la si do2 re2"
+)
 
 if entrada:
-    ref = generar_escala(original_tonica, modo.lower())
+    ref_original = generar_escala(original_tonica, modo.lower())
     dest = (
         ["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"]
         if modo == "Mayor"
@@ -141,8 +177,9 @@ if entrada:
     )
 
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
-    linea_notas = ""
-    linea_nums = ""
+    f_arka_n, f_ira_n = "ARKA: ", "IRA:  "
+    f_arka_v, f_ira_v = "NUM:  ", "NUM:  "
+    ancho = 9
 
     for nota_raw in notas_usuario:
         sufijo = (
@@ -154,45 +191,52 @@ if entrada:
         ).capitalize()
         n_limpia = BEMOLES.get(n_limpia, n_limpia)
 
-        if n_limpia in ref:
-            nota_t = dest[ref.index(n_limpia)] + sufijo
+        if n_limpia in ref_original:
+            nota_t = dest[ref_original.index(n_limpia)] + sufijo
             num_t = TABLATURA.get(nota_t, "?")
-            prefijo = "(A)" if nota_t in NOTAS_ARKA else "(I)"
+            if nota_t in NOTAS_ARKA:
+                f_arka_n += nota_t.ljust(ancho)
+                f_ira_n += " " * ancho
+                f_arka_v += num_t.ljust(ancho)
+                f_ira_v += " " * ancho
+            else:
+                f_arka_n += " " * ancho
+                f_ira_n += nota_t.ljust(ancho)
+                f_arka_v += " " * ancho
+                f_ira_v += num_t.ljust(ancho)
 
-            # Formato ultra compacto: Nota con su indicador Arka/Ira y número abajo
-            bloque_n = f"{prefijo}{nota_t}".ljust(8)
-            bloque_v = f"[{num_t}]".ljust(8)
-            linea_notas += bloque_n
-            linea_nums += bloque_v
-
-    st.code(f"{linea_notas}\n{linea_nums}")
+    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * (len(f_arka_n))}\n{f_arka_v}\n{f_ira_v}")
 
 st.write("---")
 
-# --- SIKU VIRTUAL ---
+# --- SIKU VIRTUAL Y AUDIO ---
 col_tit, col_aud = st.columns([1.2, 3])
 with col_tit:
     st.subheader("🎹 Siku Virtual")
 with col_aud:
-    if st.session_state.audio_file and os.path.exists(st.session_state.audio_file):
-        st.audio(st.session_state.audio_file, autoplay=True)
-        st.session_state.audio_file = None
+    if st.session_state.audio_file:
+        if os.path.exists(st.session_state.audio_file):
+            st.audio(st.session_state.audio_file, autoplay=True)
+            st.session_state.audio_file = None
 
-# FILAS ARKA E IRA
+# FILA ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown(
         '<div class="row-label arka-label">ARKA (1-7)</div>', unsafe_allow_html=True
     )
-for i, n in enumerate(["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]):
+ARKA_V = ["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]
+for i, n in enumerate(ARKA_V):
     with c_arka[i + 1]:
         st.button(f"{TABLATURA.get(n)}\n{n}", key=f"a_{n}", on_click=tocar, args=(n,))
 
+# FILA IRA (Desfase de 0.5 para zigzag)
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
         '<div class="row-label ira-label">IRA (Q-Y)</div>', unsafe_allow_html=True
     )
-for i, n in enumerate(["La2", "Fa#", "Re", "Si", "Sol", "Mi0"]):
+IRA_V = ["La2", "Fa#", "Re", "Si", "Sol", "Mi0"]
+for i, n in enumerate(IRA_V):
     with c_ira[i + 2]:
         st.button(f"{TABLATURA.get(n)}\n{n}", key=f"i_{n}", on_click=tocar, args=(n,))
