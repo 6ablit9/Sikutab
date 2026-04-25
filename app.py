@@ -154,7 +154,7 @@ for i, n in enumerate(ARKA):
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
 # IRA: Label (1.5) + Desfase de media nota (0.5) + 6 notas (1.0 cada una)
-c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
+c_ira = st.columns([1.5, 0.5, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1])
 with c_ira[0]:
     st.markdown(
         '<div class="row-label ira-label">IRA (Q-Y)</div>', unsafe_allow_html=True
