@@ -6,7 +6,7 @@ import streamlit as st
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: ESTÉTICA ORIGINAL Y COMPRESIÓN ---
+# --- CSS: ESTÉTICA ORIGINAL ---
 st.markdown(
     """
     <style>
@@ -39,7 +39,6 @@ st.markdown(
         border: 1px solid #333;
     }
 
-    /* Reproductor pequeño */
     audio { height: 30px; width: 220px; }
 
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
@@ -118,15 +117,20 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# SECCIÓN DE AYUDA (Mantenida exactamente igual)
+# SECCIÓN DE AYUDA RESTAURADA SEGÚN IMAGEN
 with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=False):
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
-        "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`)."
+        "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`).",
+        unsafe_allow_html=True,
     )
-    st.markdown("- **Registro Medio:** Escribe la nota normal (ej: `sol`).")
     st.markdown(
-        "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`)."
+        "- **Registro Medio:** Escribe la nota normal (ej: `sol`).",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`).",
+        unsafe_allow_html=True,
     )
 
 st.write("---")
@@ -188,7 +192,6 @@ if entrada:
 st.write("---")
 
 # --- SIKU VIRTUAL Y REPRODUCTOR ---
-# Configuración de columnas para poner el audio a la IZQUIERDA
 col_aud, col_tit = st.columns([1, 3])
 
 with col_aud:
@@ -202,7 +205,7 @@ with col_aud:
 with col_tit:
     st.subheader("🎹 Siku Virtual")
 
-# FILAS DEL SIKU (Arka e Ira)
+# FILAS DEL SIKU
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown('<div class="row-label arka-label">ARKA</div>', unsafe_allow_html=True)
