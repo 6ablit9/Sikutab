@@ -4,20 +4,13 @@ import time
 import streamlit as st
 import streamlit.components.v1 as components
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS DEFINITIVO: PALETA DE COLORES ORIGINAL ---
+# --- CSS: COMPRESIÓN Y DISEÑO ---
 st.markdown(
     """
     <style>
-    /* 1. Fondo general de la página */
-    .stApp {
-        background-color: #1e1e1e;
-        color: #f0f0f0;
-    }
-
-    /* 2. Botones del Siku (Tubos) */
     .stButton > button {
         border-radius: 50% !important;
         width: 75px !important;
@@ -32,39 +25,12 @@ st.markdown(
         line-height: 1.1 !important;
         padding: 0 !important;
         font-size: 13px !important;
-        transition: all 0.2s ease;
     }
-    .stButton > button:hover {
-        border-color: #9b59b6 !important;
-        color: #9b59b6 !important;
-        background-color: #3a3a3a !important;
-    }
-
-    /* 3. Etiquetas Laterales */
-    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; color: white; }
+    .stButton > button:hover { border-color: #9b59b6 !important; color: #9b59b6 !important; }
+    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; }
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* 4. Cuadro de Guía Desplegable (Texto Negro Legible) */
-    .top-info-box {
-        background-color: #f4ecf7;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #9b59b6;
-        color: #000000 !important;
-        font-size: 14px;
-        line-height: 1.4;
-    }
-    .top-info-box b { color: #000000; }
-
-    /* 5. Cuadro de Código (Resultado) */
-    div[data-testid="stCodeBlock"] pre {
-        background-color: #000000 !important;
-        color: #00ff00 !important;
-        border: 1px solid #333;
-    }
-
-    /* Compresión visual */
     [data-testid="stHorizontalBlock"] {
         width: fit-content !important;
         gap: 4px !important;
@@ -165,35 +131,15 @@ def tocar(nota):
 st.title("🎶 SikuTab: Transpositor y Teclado")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
-col_controles, col_guia = st.columns([1, 1.5])
-
-with col_controles:
-    st.subheader("⚙️ Configuración")
+col_t, col_m = st.columns(2)
+with col_t:
     original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
+with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
-
-
-with col_guia:
-    with st.expander("📖 Guía de Octavas y Registro Real", expanded=True):
-        st.markdown(
-            """
-        <div class="top-info-box">
-            <b>Cómo escribir las notas:</b><br>
-            • <b>Registro Agudo:</b> Agrega un <b>2</b> (ej: sol2, la2).<br>
-            • <b>Registro Medio:</b> Escribe la nota normal (ej: sol, la, si).<br>
-            • <b>Registro Grave:</b> Agrega un <b>0</b> (ej: re0, mi0).<br><hr>
-            <b>Notas en el Siku (Arka 7 / Ira 6):</b><br>
-            Sol2 a Si2 | Sol a Fa# | Re0 a Fa#0
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
 
 st.write("---")
 
-entrada = st.text_area(
-    "📝 Escribe la melodía aquí:", placeholder="Ejemplo: sol la si do2 re2", height=100
-)
+entrada = st.text_input("Escribe la melodía aquí (ej: sol la si):")
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
@@ -233,22 +179,33 @@ if entrada:
                 f_arka_v += " " * ancho
                 f_ira_v += str(num_t).ljust(ancho)
 
-    st.markdown("### 🎼 Resultado")
     st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * (len(f_arka_n))}\n{f_arka_v}\n{f_ira_v}")
 
 st.write("---")
 
+# --- CUADRO DE LÍMITES (RESTAURADO) ---
+with st.expander("ℹ️ Información sobre límites del instrumento", expanded=True):
+    st.info("""
+    **Rango del Siku (Arka 7 / Ira 6):**
+    * **Nota más grave:** Re0 (Arka, tubo 7) / Mi0 (Ira, tubo 6).
+    * **Nota más aguda:** Si2 (Arka, tubo 1) / La2 (Ira, tubo 1).
+    * *Cualquier nota fuera de este rango aparecerá con un signo '?' en la transcripción.*
+    """)
+
 # --- SIKU VIRTUAL ---
-st.subheader("🎹 Siku Virtual")
+col_head, col_audio = st.columns([1, 1])
+with col_head:
+    st.subheader("🎹 Siku Virtual")
 
 if st.session_state.audio_file:
-    placeholder = st.empty()
-    if os.path.exists(st.session_state.audio_file):
-        placeholder.audio(st.session_state.audio_file, autoplay=True)
-        time.sleep(1.2)
-        placeholder.empty()
-        st.session_state.audio_file = None
-        st.rerun()
+    with col_audio:
+        placeholder = st.empty()
+        if os.path.exists(st.session_state.audio_file):
+            placeholder.audio(st.session_state.audio_file, autoplay=True)
+            time.sleep(1.2)
+            placeholder.empty()
+            st.session_state.audio_file = None
+            st.rerun()
 
 # ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
