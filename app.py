@@ -7,18 +7,18 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: BOTONES GRISES CLAROS Y ADAPTABILIDAD ---
+# --- CSS: BOTONES GRIS MEDIO Y ESTÉTICA ---
 st.markdown(
     """
     <style>
-    /* Estilo de los Botones Circulares (Gris Claro) */
+    /* Estilo de los Botones Circulares (Gris Medio) */
     .stButton > button {
         border-radius: 50% !important;
         width: 75px !important;
         height: 75px !important;
-        border: 2px solid #ccc !important;
-        background-color: #e0e0e0 !important; /* Gris claro */
-        color: #333 !important; /* Texto oscuro para contraste */
+        border: 2px solid #888 !important;
+        background-color: #b0b0b0 !important; /* Gris un poco más oscuro que el anterior */
+        color: #1a1a1a !important; /* Texto casi negro para máxima legibilidad */
         font-weight: bold !important;
         display: flex;
         flex-direction: column;
@@ -31,8 +31,8 @@ st.markdown(
 
     .stButton > button:hover {
         border-color: #9b59b6 !important;
-        background-color: #d0d0d0 !important;
-        color: #9b59b6 !important;
+        background-color: #909090 !important;
+        color: white !important;
     }
 
     /* Etiquetas de filas */
@@ -165,9 +165,9 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=Fals
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
         """
-        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `re2`, `mi2`).
+        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `do2`, `re2`, `mi2`).
         - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`, `do`).
-        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `la0`, `si0`).
+        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `sol0`, `la0`, `si0`).
         """,
         unsafe_allow_html=True,
     )
