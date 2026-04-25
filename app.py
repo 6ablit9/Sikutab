@@ -26,10 +26,7 @@ st.markdown(
         padding: 0 !important;
         font-size: 13px !important;
     }
-    .stButton > button:hover {
-        border-color: #9b59b6 !important;
-        color: #9b59b6 !important;
-    }
+    .stButton > button:hover { border-color: #9b59b6 !important; color: #9b59b6 !important; }
     .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; }
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
@@ -39,31 +36,29 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS (MÉTODO DE POSICIÓN) ---
-# Este script cuenta los botones en la página y los pulsa según su orden
+# --- JAVASCRIPT: DETECTOR DE TECLAS INTELIGENTE ---
+# Detecta si el usuario está escribiendo en un input para no disparar sonidos
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
+    // Si el usuario está escribiendo en un input o select, NO HACER NADA
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
     const key = e.key.toLowerCase();
     const allBtns = doc.querySelectorAll('button');
-
-    // Mapeo de tecla a índice de botón (empezando desde el primero del teclado virtual)
-    // Asumiendo que los primeros botones de la página son los del Arka e Ira
     const map = {
-        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, // Arka
-        'q': 7, 'w': 8, 'e': 9, 'r': 10, 't': 11, 'y': 12     // Ira
+        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6,
+        'q': 7, 'w': 8, 'e': 9, 'r': 10, 't': 11, 'y': 12
     };
 
     if (map[key] !== undefined) {
-        // Buscamos los botones que están dentro del Siku Virtual
-        // Filtramos para evitar pulsar botones de los selectores de arriba
         const sikuBtns = Array.from(allBtns).filter(b =>
             b.innerText.includes('\\n') ||
             (b.innerText.length < 10 && /\\d/.test(b.innerText))
         );
-
         if (sikuBtns[map[key]]) {
             sikuBtns[map[key]].click();
         }
@@ -95,8 +90,6 @@ BEMOLES = {"Reb": "Do#", "Mib": "Re#", "Solb": "Fa#", "Lab": "Sol#", "Sib": "La#
 def generar_escala(tonica, modo):
     pasos = [2, 2, 1, 2, 2, 2, 1] if modo == "mayor" else [2, 1, 2, 2, 1, 2, 2]
     t_limpia = BEMOLES.get(tonica.capitalize(), tonica.capitalize())
-    if t_limpia not in NOTAS_MUSICALES:
-        return None
     idx = NOTAS_MUSICALES.index(t_limpia)
     escala = []
     actual = idx
@@ -142,7 +135,10 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-entrada = st.text_input("Escribe la melodía aquí:")
+st.write("---")
+
+entrada = st.text_input("Escribe la melodía aquí (ej: sol la si):")
+
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
     dest = (
@@ -151,7 +147,12 @@ if entrada:
         else ["Mi", "Fa#", "Sol", "La", "Si", "Do", "Re"]
     )
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
-    f_arka_n, f_ira_n = "ARKA: ", "IRA:  "
+
+    # Filas de la transcripción
+    f_arka_n, f_ira_n = "ARKA (Notas): ", "IRA  (Notas): "
+    f_arka_v, f_ira_v = "ARKA (Num):   ", "IRA  (Num):   "
+    ancho = 9
+
     for nota_raw in notas_usuario:
         sufijo = (
             "0" if nota_raw.endswith("0") else ("2" if nota_raw.endswith("2") else "")
@@ -161,15 +162,23 @@ if entrada:
             [c for c in n_nombre if c.isalpha() or c == "#"]
         ).capitalize()
         n_limpia = BEMOLES.get(n_limpia, n_limpia)
+
         if n_limpia in ref_original:
             nota_t = dest[ref_original.index(n_limpia)] + sufijo
+            num_t = TABLATURA.get(nota_t, "?")
+
             if nota_t in ARKA:
-                f_arka_n += nota_t.ljust(8)
-                f_ira_n += " " * 8
+                f_arka_n += nota_t.ljust(ancho)
+                f_ira_n += " " * ancho
+                f_arka_v += str(num_t).ljust(ancho)
+                f_ira_v += " " * ancho
             else:
-                f_arka_n += " " * 8
-                f_ira_n += nota_t.ljust(8)
-    st.code(f"{f_arka_n}\n{f_ira_n}")
+                f_arka_n += " " * ancho
+                f_ira_n += nota_t.ljust(ancho)
+                f_arka_v += " " * ancho
+                f_ira_v += str(num_t).ljust(ancho)
+
+    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * (len(f_arka_n))}\n{f_arka_v}\n{f_ira_v}")
 
 st.write("---")
 
@@ -187,7 +196,7 @@ if st.session_state.audio_file:
         st.session_state.audio_file = None
         st.rerun()
 
-# ARKA (1-7)
+# ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1, 2])
 with c_arka[0]:
     st.markdown(
@@ -198,7 +207,7 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# IRA (Q-Y)
+# IRA
 c_ira = st.columns([1.5, 0.6, 1, 1, 1, 1, 1, 1, 2.5])
 with c_ira[0]:
     st.markdown(
