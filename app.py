@@ -30,20 +30,20 @@ st.markdown(
     .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; }
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
+
+    /* Mantenemos el bloque compacto para que el zigzag sea real */
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 12px !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS INTELIGENTE ---
-# Detecta si el usuario está escribiendo en un input para no disparar sonidos
+# --- JAVASCRIPT: DETECTOR DE TECLAS ---
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
-    // Si el usuario está escribiendo en un input o select, NO HACER NADA
     const tag = e.target.tagName.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
@@ -148,7 +148,6 @@ if entrada:
     )
     notas_usuario = [n.strip() for n in entrada.split() if n.strip()]
 
-    # Filas de la transcripción
     f_arka_n, f_ira_n = "ARKA (Notas): ", "IRA  (Notas): "
     f_arka_v, f_ira_v = "ARKA (Num):   ", "IRA  (Num):   "
     ancho = 9
@@ -196,8 +195,13 @@ if st.session_state.audio_file:
         st.session_state.audio_file = None
         st.rerun()
 
-# ARKA
-c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1, 2])
+# --- FILAS CON SEPARACIÓN IDÉNTICA ---
+# Definimos el mismo patrón de anchos para que los círculos midan lo mismo en ambas filas
+layout_arka = [1.5, 1, 1, 1, 1, 1, 1, 1, 2]
+layout_ira = [1.5, 0.6, 1, 1, 1, 1, 1, 1, 2.4]  # El 0.6 es el desfase, el resto son 1s.
+
+# FILA ARKA
+c_arka = st.columns(layout_arka)
 with c_arka[0]:
     st.markdown(
         '<div class="row-label arka-label">ARKA (1-7)</div>', unsafe_allow_html=True
@@ -207,12 +211,13 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# IRA
-c_ira = st.columns([1.5, 0.6, 1, 1, 1, 1, 1, 1, 2.5])
+# FILA IRA
+c_ira = st.columns(layout_ira)
 with c_ira[0]:
     st.markdown(
         '<div class="row-label ira-label">IRA (Q-Y)</div>', unsafe_allow_html=True
     )
+# c_ira[1] es el espacio de desfase
 for i, n in enumerate(IRA):
     num = TABLATURA.get(n, "")
     with c_ira[i + 2]:
