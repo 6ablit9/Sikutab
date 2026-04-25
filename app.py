@@ -7,18 +7,19 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: ADAPTABLE A MODO CLARO/OSCURO ---
+# --- CSS: BOTONES GRISES CLAROS Y ADAPTABILIDAD ---
 st.markdown(
     """
     <style>
-    /* Estilo de los Botones Circulares del Siku */
+    /* Estilo de los Botones Circulares (Gris Claro) */
     .stButton > button {
         border-radius: 50% !important;
         width: 75px !important;
         height: 75px !important;
-        border: 2px solid #555 !important;
-        background-color: #2e2e2e !important; /* Fondo oscuro para que resalten los números */
-        color: white !important;
+        border: 2px solid #ccc !important;
+        background-color: #e0e0e0 !important; /* Gris claro */
+        color: #333 !important; /* Texto oscuro para contraste */
+        font-weight: bold !important;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -27,8 +28,10 @@ st.markdown(
         font-size: 13px !important;
         transition: all 0.2s ease;
     }
+
     .stButton > button:hover {
         border-color: #9b59b6 !important;
+        background-color: #d0d0d0 !important;
         color: #9b59b6 !important;
     }
 
@@ -162,9 +165,9 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=Fals
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
         """
-        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `do2`, `re2`, `mi2`).
+        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `re2`, `mi2`).
         - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`, `do`).
-        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `sol0`, `la0`, `si0`).
+        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `la0`, `si0`).
         """,
         unsafe_allow_html=True,
     )
