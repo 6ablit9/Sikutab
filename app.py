@@ -34,41 +34,45 @@ st.markdown(
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    .top-info-box {
-        background-color: #f4ecf7;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #9b59b6;
-        color: #000000 !important;
-        font-size: 14px;
-    }
-
+    /* Cuadro de código con estilo terminal verde */
     div[data-testid="stCodeBlock"] pre {
         background-color: #000000 !important;
         color: #00ff00 !important;
         border: 1px solid #333;
     }
 
+    /* Compresión de espacio entre botones */
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: TECLADO FÍSICO ---
+# --- JAVASCRIPT: DETECTOR DE TECLAS CORREGIDO ---
 components.html(
     """
 <script>
 const doc = window.parent.document;
 doc.addEventListener('keydown', function(e) {
+    // No activar si el usuario está escribiendo en el área de texto o inputs
     const tag = e.target.tagName.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
     const key = e.key.toLowerCase();
     const allBtns = doc.querySelectorAll('button');
-    const map = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'q':7,'w':8,'e':9,'r':10,'t':11,'y':12};
+
+    // Mapa de teclas: 1-7 para Arka, Q-Y para Ira
+    const map = {
+        '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6,
+        'q':7, 'w':8, 'e':9, 'r':10, 't':11, 'y':12
+    };
+
     if (map[key] !== undefined) {
+        // Filtramos solo los botones del Siku (los que tienen salto de línea \n)
         const sikuBtns = Array.from(allBtns).filter(b => b.innerText.includes('\\n'));
-        if (sikuBtns[map[key]]) { sikuBtns[map[key]].click(); }
+        if (sikuBtns[map[key]]) {
+            sikuBtns[map[key]].click();
+        }
     }
 });
 </script>
@@ -146,28 +150,42 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# GUÍA DESPLEGABLE PEDAGÓGICA
-with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=True):
+# --- GUÍA DESPLEGABLE (FONDO AZUL ESTÁNDAR Y CERRADO) ---
+# expanded=False hace que parta sin desplegar
+with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=False):
+    st.markdown("### Cómo escribir las notas:")
     st.markdown(
-        """
-    <div class="top-info-box">
-        <b>Cómo escribir las notas:</b><br>
-        • <span style='color: #9b59b6;'><b>Registro Agudo:</b></span> Agrega un <b>2</b> (ej: sol2, la2).<br>
-        • <b>Registro Medio:</b> Escribe la nota normal (ej: sol, la, si).<br>
-        • <span style='color: #e67e22;'><b>Registro Grave:</b></span> Agrega un <b>0</b> (ej: re0, mi0).<br>
-        <hr>
-        <b>Notas disponibles en el Siku:</b><br>
-        • <b>AGUDOS:</b> Sol2, La2, Si2<br>
-        • <b>MEDIOS:</b> Sol, La, Si, Do, Re, Mi, Fa#<br>
-        • <b>GRAVES:</b> Re0, Mi0, Fa#0
-    </div>
-    """,
+        "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`, `la2`).",
+        unsafe_allow_html=True,
+    )
+    st.markdown("- **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).")
+    st.markdown(
+        "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`, `mi0`).",
         unsafe_allow_html=True,
     )
 
+    st.info("""
+    **⚠️ Adaptación de Melodía:**
+    Si al transponer una nota sale del registro, aparecerá un **[?]**.
+    Deberás ajustar la octava en tu entrada original para que calce en el instrumento.
+    """)
+
+    st.markdown("### 🎼 Notas disponibles en el Siku:")
+    st.markdown(
+        "<span style='color: #9b59b6;'>**AGUDOS:** Sol2, La2, Si2</span>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("**MEDIOS:** Sol, La, Si, Do, Re, Mi, Fa#")
+    st.markdown(
+        "<span style='color: #e67e22;'>**GRAVES:** Re0, Mi0, Fa#0</span>",
+        unsafe_allow_html=True,
+    )
+
+st.write("---")
+
 # ENTRADA DE TEXTO
 entrada = st.text_area(
-    "Escribe la melodía aquí:",
+    "📝 Escribe la melodía aquí:",
     placeholder="Ejemplo: sol la si do re mi fa#",
     height=150,
 )
@@ -222,7 +240,9 @@ if entrada:
             f_ira_num += " " * ancho
 
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
-    st.code(f"{f_arka_n}\n{f_ira_n}\n{'-' * len(f_arka_n)}\n{f_arka_num}\n{f_ira_num}")
+    st.code(
+        f"{f_arka_n}\n{f_ira_n}\n{'-' * (len(f_arka_n))}\n{f_arka_num}\n{f_ira_num}"
+    )
 
 st.write("---")
 
@@ -237,19 +257,18 @@ if st.session_state.audio_file:
         st.session_state.audio_file = None
         st.rerun()
 
-# ARKA (Botones 1-7)
+# ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown(
         '<div class="row-label arka-label">ARKA (1-7)</div>', unsafe_allow_html=True
     )
-# Las notas del Arka en el instrumento real suelen ir de agudo a grave (Si2 a Re0)
 ARKA_VIRTUAL = ["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]
 for i, n in enumerate(ARKA_VIRTUAL):
     with c_arka[i + 1]:
         st.button(f"{TABLATURA.get(n)}\n{n}", key=f"a_{n}", on_click=tocar, args=(n,))
 
-# IRA (Botones Q-Y)
+# IRA
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
