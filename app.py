@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: ESTÉTICA ORIGINAL Y COMPRESIÓN ---
+# --- CSS: ESTÉTICA ORIGINAL ---
 st.markdown(
     """
     <style>
@@ -40,42 +40,12 @@ st.markdown(
         border: 1px solid #333;
     }
 
-    /* Reproductor pequeño */
     audio { height: 30px; width: 220px; }
 
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
-)
-
-# --- JAVASCRIPT: DETECTOR DE TECLAS ---
-components.html(
-    """
-<script>
-const doc = window.parent.document;
-doc.addEventListener('keydown', function(e) {
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-
-    const key = e.key.toLowerCase();
-    const allBtns = doc.querySelectorAll('button');
-
-    const map = {
-        '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6,
-        'q':7, 'w':8, 'e':9, 'r':10, 't':11, 'y':12
-    };
-
-    if (map[key] !== undefined) {
-        const sikuBtns = Array.from(allBtns).filter(b => b.innerText.includes('\\n'));
-        if (sikuBtns[map[key]]) {
-            sikuBtns[map[key]].click();
-        }
-    }
-});
-</script>
-""",
-    height=0,
 )
 
 # --- LÓGICA DE ESCALAS ---
@@ -147,7 +117,7 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# --- GUÍA DESPLEGABLE (Transcripción exacta de imagen) ---
+# --- GUÍA DESPLEGABLE ---
 with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=False):
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
@@ -160,7 +130,7 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=Fals
     )
 
     st.info("""
-    **⚠️ Adaptación de Melodía:** Si al transponer una nota sale del registro, aparecerá un **[?]**. Deberás ajustar la octava en tu entrada original para que calce en el instrumento.
+    **⚠️ Adaptación de Melodía:** Si al transponer una nota sale del registro, aparecerá un **?**. Deberás ajustar la octava en tu entrada original para que calce en el instrumento.
     """)
 
     st.markdown("### 🎼 Notas disponibles en el Siku:")
@@ -220,10 +190,17 @@ if entrada:
                 f_ira_n += nota_t.ljust(ancho)
                 f_arka_num += " " * ancho
                 f_ira_num += num_t.ljust(ancho)
+            else:
+                # Si la nota transpuesta existe pero no está en el reparto de este siku
+                f_arka_n += "?".ljust(ancho)
+                f_ira_n += " " * ancho
+                f_arka_num += "?".ljust(ancho)
+                f_ira_num += " " * ancho
         else:
-            f_arka_n += "??".ljust(ancho)
+            # Si la nota ni siquiera está en la escala original
+            f_arka_n += "?".ljust(ancho)
             f_ira_n += " " * ancho
-            f_arka_num += "??".ljust(ancho)
+            f_arka_num += "?".ljust(ancho)
             f_ira_num += " " * ancho
 
     st.markdown(f"### 🎼 Resultado en {nombre_final}")
