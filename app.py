@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: COMPRESIÓN, DISEÑO Y ESPACIADO ---
+# --- CSS: COMPRESIÓN Y LEGIBILIDAD ---
 st.markdown(
     """
     <style>
@@ -32,13 +32,15 @@ st.markdown(
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* Espaciado para la sección de controles superiores */
+    /* Cuadro de Info con texto negro */
     .top-info-box {
-        background-color: #f0f2f6;
+        background-color: #e1e4e8;
         padding: 15px;
         border-radius: 10px;
         border-left: 5px solid #9b59b6;
+        color: #1a1a1a !important;
         font-size: 14px;
+        line-height: 1.4;
     }
 
     [data-testid="stHorizontalBlock"] {
@@ -137,36 +139,40 @@ def tocar(nota):
     st.session_state.audio_file = f"{nota}.wav"
 
 
-# --- INTERFAZ SUPERIOR REESTRUCTURADA ---
+# --- INTERFAZ SUPERIOR ---
 st.title("🎶 SikuTab: Transpositor y Teclado")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
-# Fila superior: Nota/Modo y la Info de límites al lado
-col_controles, col_vacia, col_info = st.columns([1.2, 0.1, 1.5])
+col_controles, col_guia = st.columns([1, 1.5])
 
 with col_controles:
-    st.write("### ⚙️ Configuración")
+    st.subheader("⚙️ Configuración")
     original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
-    st.write("")  # Espacio extra
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-with col_info:
-    st.markdown(
-        """
-    <div class="top-info-box">
-        <b>📏 Límites del Instrumento (Arka 7 / Ira 6)</b><br>
-        • <b>Rango:</b> Desde Re0 (tubo 7) hasta Si2 (tubo 1).<br>
-        • <b>Escala destino:</b> Sol Mayor / Mi Menor (afinación estándar).<br>
-        • Las notas fuera de rango se marcarán con <b>'?'</b>.
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+with col_guia:
+    # --- GUÍA DESPLEGABLE RESTAURADA ---
+    with st.expander("📖 Guía de Octavas y Registro Real", expanded=True):
+        st.markdown(
+            """
+        <div class="top-info-box">
+            <b>Cómo escribir las notas:</b><br>
+            • <b>Registro Agudo:</b> Agrega un <b>2</b> (ej: sol2, la2).<br>
+            • <b>Registro Medio:</b> Escribe la nota normal (ej: sol, la, si).<br>
+            • <b>Registro Grave:</b> Agrega un <b>0</b> (ej: re0, mi0).<br><hr>
+            <b>Notas en el Siku (Arka 7 / Ira 6):</b><br>
+            Sol2 a Si2 | Sol a Fa# | Re0 a Fa#0
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
 st.write("---")
 
-# Entrada de melodía
-entrada = st.text_input("📝 Escribe la melodía aquí (ej: sol la si):")
+# ENTRADA DE MELODÍA (TEXT AREA)
+entrada = st.text_area(
+    "📝 Escribe la melodía aquí:", placeholder="Ejemplo: sol la si do2 re2", height=100
+)
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
@@ -211,19 +217,16 @@ if entrada:
 st.write("---")
 
 # --- SIKU VIRTUAL ---
-col_head, col_audio = st.columns([1, 1])
-with col_head:
-    st.subheader("🎹 Siku Virtual")
+st.subheader("🎹 Siku Virtual")
 
 if st.session_state.audio_file:
-    with col_audio:
-        placeholder = st.empty()
-        if os.path.exists(st.session_state.audio_file):
-            placeholder.audio(st.session_state.audio_file, autoplay=True)
-            time.sleep(1.2)
-            placeholder.empty()
-            st.session_state.audio_file = None
-            st.rerun()
+    placeholder = st.empty()
+    if os.path.exists(st.session_state.audio_file):
+        placeholder.audio(st.session_state.audio_file, autoplay=True)
+        time.sleep(1.2)
+        placeholder.empty()
+        st.session_state.audio_file = None
+        st.rerun()
 
 # ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
@@ -236,7 +239,7 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# IRA (Zigzag uniforme de 0.5)
+# IRA
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
