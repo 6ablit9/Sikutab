@@ -35,28 +35,28 @@ st.markdown(
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
 
-    /* Cuadro de código verde tipo terminal */
+    /* Cuadro de código verde */
     div[data-testid="stCodeBlock"] pre {
         background-color: #000000 !important;
         color: #00ff00 !important;
         border: 1px solid #333;
     }
 
-    /* Reproductor pequeño y discreto */
+    /* Ajuste del reproductor para que no rompa el título */
     audio {
         height: 30px;
         width: 180px;
-        filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+        filter: invert(100%) hue-rotate(180deg) brightness(1.5); /* Hace que combine mejor con el modo oscuro */
     }
 
-    /* Compresión de espacio entre botones para zigzag */
+    /* Compresión de espacio entre botones */
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: DETECTOR DE TECLAS (1-7 y Q-Y) ---
+# --- JAVASCRIPT: DETECTOR DE TECLAS (VERSIÓN ROBUSTA) ---
 components.html(
     """
 <script>
@@ -66,14 +66,15 @@ doc.addEventListener('keydown', function(e) {
     if (tag === 'input' || tag === 'textarea') return;
 
     const key = e.key.toLowerCase();
+    // Mapa: 1-7 (índices 0-6), Q-Y (índices 7-12)
     const map = {
         '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6,
         'q':7, 'w':8, 'e':9, 'r':10, 't':11, 'y':12
     };
 
     if (map[key] !== undefined) {
+        // Buscamos todos los botones que tienen el formato de nota (ej: "5\\nSol")
         const allBtns = Array.from(doc.querySelectorAll('button'));
-        // Filtramos solo los botones que tienen el formato de nota (con salto de línea)
         const sikuBtns = allBtns.filter(b => b.innerText.includes('\\n'));
 
         if (sikuBtns[map[key]]) {
@@ -87,7 +88,7 @@ doc.addEventListener('keydown', function(e) {
     height=0,
 )
 
-# --- LÓGICA DE ESCALAS Y TRANSPOSICIÓN ---
+# --- LÓGICA DE ESCALAS ---
 NOTAS_MUSICALES = [
     "Do",
     "Do#",
@@ -119,7 +120,7 @@ def generar_escala(tonica, modo):
     return escala
 
 
-# --- TABLATURA Y REGISTROS ---
+# --- REPARTO Y TABLATURA ---
 TABLATURA = {
     "Re0": "7",
     "Mi0": "6",
@@ -209,17 +210,20 @@ if entrada:
 
 st.write("---")
 
-# --- SIKU VIRTUAL Y AUDIO ---
+# --- SIKU VIRTUAL Y REPRODUCTOR ALINEADO ---
+# Usamos columnas muy ajustadas para que el audio quede pegado al título
 col_tit, col_aud = st.columns([1.2, 3])
 with col_tit:
     st.subheader("🎹 Siku Virtual")
 with col_aud:
+    # Contenedor para el audio
     if st.session_state.audio_file:
         if os.path.exists(st.session_state.audio_file):
             st.audio(st.session_state.audio_file, autoplay=True)
+            # Pequeño truco para limpiar el estado sin refrescar violentamente
             st.session_state.audio_file = None
 
-# FILA ARKA
+# ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown(
@@ -230,7 +234,7 @@ for i, n in enumerate(ARKA_V):
     with c_arka[i + 1]:
         st.button(f"{TABLATURA.get(n)}\n{n}", key=f"a_{n}", on_click=tocar, args=(n,))
 
-# FILA IRA (Desfase de 0.5 para zigzag)
+# IRA
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
