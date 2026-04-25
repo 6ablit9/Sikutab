@@ -2,11 +2,12 @@ import os
 import time
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: ESTÉTICA ORIGINAL ---
+# --- CSS: ESTÉTICA ORIGINAL Y COMPRESIÓN ---
 st.markdown(
     """
     <style>
@@ -39,12 +40,42 @@ st.markdown(
         border: 1px solid #333;
     }
 
+    /* Reproductor pequeño */
     audio { height: 30px; width: 220px; }
 
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
+)
+
+# --- JAVASCRIPT: DETECTOR DE TECLAS ---
+components.html(
+    """
+<script>
+const doc = window.parent.document;
+doc.addEventListener('keydown', function(e) {
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+    const key = e.key.toLowerCase();
+    const allBtns = doc.querySelectorAll('button');
+
+    const map = {
+        '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6,
+        'q':7, 'w':8, 'e':9, 'r':10, 't':11, 'y':12
+    };
+
+    if (map[key] !== undefined) {
+        const sikuBtns = Array.from(allBtns).filter(b => b.innerText.includes('\\n'));
+        if (sikuBtns[map[key]]) {
+            sikuBtns[map[key]].click();
+        }
+    }
+});
+</script>
+""",
+    height=0,
 )
 
 # --- LÓGICA DE ESCALAS ---
@@ -67,8 +98,7 @@ BEMOLES = {"Reb": "Do#", "Mib": "Re#", "Solb": "Fa#", "Lab": "Sol#", "Sib": "La#
 
 def generar_escala(tonica, modo):
     pasos = [2, 2, 1, 2, 2, 2, 1] if modo == "mayor" else [2, 1, 2, 2, 1, 2, 2]
-    t_limpia = tonica.capitalize().replace(" ", "")
-    t_limpia = BEMOLES.get(t_limpia, t_limpia)
+    t_limpia = BEMOLES.get(tonica.capitalize(), tonica.capitalize())
     if t_limpia not in NOTAS_MUSICALES:
         return None
     idx = NOTAS_MUSICALES.index(t_limpia)
@@ -117,19 +147,31 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# SECCIÓN DE AYUDA RESTAURADA SEGÚN IMAGEN
+# --- GUÍA DESPLEGABLE (Transcripción exacta de imagen) ---
 with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=False):
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
-        "- <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`).",
+        """
+        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `sol2`, `la2`).
+        - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`).
+        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`, `mi0`).
+        """,
         unsafe_allow_html=True,
     )
+
+    st.info("""
+    **⚠️ Adaptación de Melodía:** Si al transponer una nota sale del registro, aparecerá un **[?]**. Deberás ajustar la octava en tu entrada original para que calce en el instrumento.
+    """)
+
+    st.markdown("### 🎼 Notas disponibles en el Siku:")
     st.markdown(
-        "- **Registro Medio:** Escribe la nota normal (ej: `sol`).",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "- <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `re0`).",
+        """
+        <span style='color: #9b59b6;'>**AGUDOS: Sol2, La2, Si2**</span>
+
+        **MEDIOS: Sol, La, Si, Do, Re, Mi, Fa#**
+
+        <span style='color: #e67e22;'>**GRAVES: Re0, Mi0, Fa#0**</span>
+        """,
         unsafe_allow_html=True,
     )
 
@@ -192,7 +234,7 @@ if entrada:
 st.write("---")
 
 # --- SIKU VIRTUAL Y REPRODUCTOR ---
-col_aud, col_tit = st.columns([1, 3])
+col_aud, col_tit, col_filler = st.columns([2, 2, 4])
 
 with col_aud:
     if st.session_state.audio_file:
@@ -205,7 +247,7 @@ with col_aud:
 with col_tit:
     st.subheader("🎹 Siku Virtual")
 
-# FILAS DEL SIKU
+# ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown('<div class="row-label arka-label">ARKA</div>', unsafe_allow_html=True)
@@ -214,6 +256,7 @@ for i, n in enumerate(ARKA_VIRTUAL):
     with c_arka[i + 1]:
         st.button(f"{TABLATURA.get(n)}\n{n}", key=f"a_{n}", on_click=tocar, args=(n,))
 
+# IRA
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown('<div class="row-label ira-label">IRA</div>', unsafe_allow_html=True)
