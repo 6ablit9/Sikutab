@@ -143,7 +143,6 @@ entrada = st.text_input("Escribe la melodía aquí (ej: sol la si):")
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
-    # Destino estándar (Sol Mayor / Mi Menor)
     dest = (
         ["Sol", "La", "Si", "Do", "Re", "Mi", "Fa#"]
         if modo == "Mayor"
@@ -184,6 +183,15 @@ if entrada:
 
 st.write("---")
 
+# --- CUADRO DE LÍMITES (RESTAURADO) ---
+with st.expander("ℹ️ Información sobre límites del instrumento", expanded=True):
+    st.info("""
+    **Rango del Siku (Arka 7 / Ira 6):**
+    * **Nota más grave:** Re0 (Arka, tubo 7) / Mi0 (Ira, tubo 6).
+    * **Nota más aguda:** Si2 (Arka, tubo 1) / La2 (Ira, tubo 1).
+    * *Cualquier nota fuera de este rango aparecerá con un signo '?' en la transcripción.*
+    """)
+
 # --- SIKU VIRTUAL ---
 col_head, col_audio = st.columns([1, 1])
 with col_head:
@@ -199,7 +207,7 @@ if st.session_state.audio_file:
             st.session_state.audio_file = None
             st.rerun()
 
-# ARKA: Label (1.5) + 7 notas
+# ARKA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown(
@@ -210,7 +218,7 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# IRA: Label (1.5) + Desfase (0.5) + 6 notas
+# IRA
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
