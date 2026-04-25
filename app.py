@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: COMPRESIÓN Y DISEÑO ---
+# --- CSS: COMPRESIÓN, DISEÑO Y ESPACIADO ---
 st.markdown(
     """
     <style>
@@ -27,9 +27,19 @@ st.markdown(
         font-size: 13px !important;
     }
     .stButton > button:hover { border-color: #9b59b6 !important; color: #9b59b6 !important; }
+
     .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; }
     .arka-label { color: #9b59b6; }
     .ira-label { color: #e67e22; }
+
+    /* Espaciado para la sección de controles superiores */
+    .top-info-box {
+        background-color: #f0f2f6;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #9b59b6;
+        font-size: 14px;
+    }
 
     [data-testid="stHorizontalBlock"] {
         width: fit-content !important;
@@ -127,19 +137,36 @@ def tocar(nota):
     st.session_state.audio_file = f"{nota}.wav"
 
 
-# --- INTERFAZ SUPERIOR ---
+# --- INTERFAZ SUPERIOR REESTRUCTURADA ---
 st.title("🎶 SikuTab: Transpositor y Teclado")
 st.caption("Prof. Pablo Olivero - Liceo San José del Carmen")
 
-col_t, col_m = st.columns(2)
-with col_t:
+# Fila superior: Nota/Modo y la Info de límites al lado
+col_controles, col_vacia, col_info = st.columns([1.2, 0.1, 1.5])
+
+with col_controles:
+    st.write("### ⚙️ Configuración")
     original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
-with col_m:
+    st.write("")  # Espacio extra
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
+
+with col_info:
+    st.markdown(
+        """
+    <div class="top-info-box">
+        <b>📏 Límites del Instrumento (Arka 7 / Ira 6)</b><br>
+        • <b>Rango:</b> Desde Re0 (tubo 7) hasta Si2 (tubo 1).<br>
+        • <b>Escala destino:</b> Sol Mayor / Mi Menor (afinación estándar).<br>
+        • Las notas fuera de rango se marcarán con <b>'?'</b>.
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
 st.write("---")
 
-entrada = st.text_input("Escribe la melodía aquí (ej: sol la si):")
+# Entrada de melodía
+entrada = st.text_input("📝 Escribe la melodía aquí (ej: sol la si):")
 
 if entrada:
     ref_original = generar_escala(original_tonica, modo.lower())
@@ -183,15 +210,6 @@ if entrada:
 
 st.write("---")
 
-# --- CUADRO DE LÍMITES (RESTAURADO) ---
-with st.expander("ℹ️ Información sobre límites del instrumento", expanded=True):
-    st.info("""
-    **Rango del Siku (Arka 7 / Ira 6):**
-    * **Nota más grave:** Re0 (Arka, tubo 7) / Mi0 (Ira, tubo 6).
-    * **Nota más aguda:** Si2 (Arka, tubo 1) / La2 (Ira, tubo 1).
-    * *Cualquier nota fuera de este rango aparecerá con un signo '?' en la transcripción.*
-    """)
-
 # --- SIKU VIRTUAL ---
 col_head, col_audio = st.columns([1, 1])
 with col_head:
@@ -218,7 +236,7 @@ for i, n in enumerate(ARKA):
     with c_arka[i + 1]:
         st.button(f"{num}\n{n}", key=f"v_a_{n}", on_click=tocar, args=(n,))
 
-# IRA
+# IRA (Zigzag uniforme de 0.5)
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
