@@ -7,28 +7,17 @@ import streamlit.components.v1 as components
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SikuTab", page_icon="🎶", layout="wide")
 
-# --- CSS: MODO OSCURO FORZADO Y ESTÉTICA ORIGINAL ---
+# --- CSS: ADAPTABLE A MODO CLARO/OSCURO ---
 st.markdown(
     """
     <style>
-    /* Forzar modo oscuro en toda la app */
-    .stApp {
-        background-color: #1e1e1e !important;
-        color: #f0f0f0 !important;
-    }
-
-    /* Ajuste de textos de labels para que siempre sean visibles en oscuro */
-    label, .stMarkdown, p, h1, h2, h3, h4, h5, h6, span {
-        color: #f0f0f0 !important;
-    }
-
-    /* Botones Circulares del Siku */
+    /* Estilo de los Botones Circulares del Siku */
     .stButton > button {
         border-radius: 50% !important;
         width: 75px !important;
         height: 75px !important;
         border: 2px solid #555 !important;
-        background-color: #2e2e2e !important;
+        background-color: #2e2e2e !important; /* Fondo oscuro para que resalten los números */
         color: white !important;
         display: flex;
         flex-direction: column;
@@ -41,14 +30,20 @@ st.markdown(
     .stButton > button:hover {
         border-color: #9b59b6 !important;
         color: #9b59b6 !important;
-        background-color: #3a3a3a !important;
     }
 
-    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; color: white !important; }
+    /* Etiquetas de filas */
+    .row-label {
+        font-weight: bold;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        height: 75px;
+    }
     .arka-label { color: #9b59b6 !important; }
     .ira-label { color: #e67e22 !important; }
 
-    /* Cuadro de código verde terminal */
+    /* Cuadro de código estilo terminal */
     div[data-testid="stCodeBlock"] pre {
         background-color: #000000 !important;
         color: #00ff00 !important;
@@ -57,14 +52,8 @@ st.markdown(
 
     audio { height: 30px; width: 220px; }
 
-    /* Espaciado de botones */
+    /* Ajuste de bloques horizontales */
     [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
-
-    /* Forzar el fondo oscuro en los inputs */
-    .stTextInput > div > div > input {
-        background-color: #2e2e2e !important;
-        color: white !important;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -173,9 +162,9 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=Fals
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
         """
-        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `re2`, `mi2`).
+        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `do2`, `re2`, `mi2`).
         - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`, `do`).
-        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `la0`, `si0`).
+        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `sol0`, `la0`, `si0`).
         """,
         unsafe_allow_html=True,
     )
