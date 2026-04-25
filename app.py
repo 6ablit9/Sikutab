@@ -28,11 +28,6 @@ st.markdown(
         line-height: 1.1 !important;
         font-size: 13px !important;
     }
-    .stButton > button:hover { border-color: #9b59b6 !important; color: #9b59b6 !important; background-color: #3a3a3a !important; }
-
-    .row-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; height: 75px; color: white; }
-    .arka-label { color: #9b59b6; }
-    .ira-label { color: #e67e22; }
 
     /* Cuadro de código verde compacto */
     div[data-testid="stCodeBlock"] pre {
@@ -43,41 +38,23 @@ st.markdown(
     }
 
     audio { height: 30px; width: 180px; filter: invert(100%); }
-    [data-testid="stHorizontalBlock"] { width: fit-content !important; gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- JAVASCRIPT: ASIGNACIÓN DE TECLAS (1-7 y Q-Y) ---
+# --- JAVASCRIPT: DETECTOR DE TECLAS ---
 components.html(
     """
 <script>
 const doc = window.parent.document;
-
 doc.addEventListener('keydown', function(e) {
-    // No activar si el usuario está escribiendo en el cuadro de texto
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea') return;
-
+    if (e.target.tagName.toLowerCase() === 'input') return;
     const key = e.key.toLowerCase();
-
-    // Mapeo exacto: 1-7 Arka, Q-Y Ira
-    const keyMap = {
-        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6,  // Arka
-        'q': 7, 'w': 8, 'e': 9, 'r': 10, 't': 11, 'y': 12       // Ira
-    };
-
-    if (keyMap.hasOwnProperty(key)) {
-        // Buscamos todos los botones que contienen un número y una nota (tienen salto de línea)
-        const allButtons = Array.from(doc.querySelectorAll('button'));
-        const sikuButtons = allButtons.filter(btn => btn.innerText.includes('\\n'));
-
-        const targetIndex = keyMap[key];
-        if (sikuButtons[targetIndex]) {
-            e.preventDefault(); // Evita scrolls accidentales
-            sikuButtons[targetIndex].click();
-        }
+    const map = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'q':7,'w':8,'e':9,'r':10,'t':11,'y':12};
+    if (map[key] !== undefined) {
+        const btns = Array.from(doc.querySelectorAll('button')).filter(b => b.innerText.includes('\\n'));
+        if (btns[map[key]]) { e.preventDefault(); btns[map[key]].click(); }
     }
 });
 </script>
@@ -144,7 +121,7 @@ def tocar(nota):
 st.title("🎶 SikuTab")
 col_t, col_m = st.columns([1, 1])
 with col_t:
-    original_tonica = st.selectbox("Tonalidad Original", NOTAS_MUSICALES)
+    original_tonica = st.selectbox("Tonalidad", NOTAS_MUSICALES)
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
@@ -153,7 +130,7 @@ with st.expander("📖 Guía rápida", expanded=False):
 
 st.write("---")
 
-entrada = st.text_input("📝 Escribe la melodía aquí:", placeholder="Ej: sol la si do2")
+entrada = st.text_input("📝 Escribe la melodía:", placeholder="Ej: sol la si do2")
 
 if entrada:
     ref = generar_escala(original_tonica, modo.lower())
@@ -182,6 +159,7 @@ if entrada:
             num_t = TABLATURA.get(nota_t, "?")
             prefijo = "(A)" if nota_t in NOTAS_ARKA else "(I)"
 
+            # Formato ultra compacto: Nota con su indicador Arka/Ira y número abajo
             bloque_n = f"{prefijo}{nota_t}".ljust(8)
             bloque_v = f"[{num_t}]".ljust(8)
             linea_notas += bloque_n
@@ -191,17 +169,16 @@ if entrada:
 
 st.write("---")
 
-# --- SIKU VIRTUAL Y REPRODUCTOR ---
+# --- SIKU VIRTUAL ---
 col_tit, col_aud = st.columns([1.2, 3])
 with col_tit:
     st.subheader("🎹 Siku Virtual")
 with col_aud:
-    if st.session_state.audio_file:
-        if os.path.exists(st.session_state.audio_file):
-            st.audio(st.session_state.audio_file, autoplay=True)
-            st.session_state.audio_file = None
+    if st.session_state.audio_file and os.path.exists(st.session_state.audio_file):
+        st.audio(st.session_state.audio_file, autoplay=True)
+        st.session_state.audio_file = None
 
-# FILA ARKA (Teclas 1-7)
+# FILAS ARKA E IRA
 c_arka = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
 with c_arka[0]:
     st.markdown(
@@ -211,7 +188,6 @@ for i, n in enumerate(["Si2", "Sol2", "Mi", "Do", "La", "Fa#0", "Re0"]):
     with c_arka[i + 1]:
         st.button(f"{TABLATURA.get(n)}\n{n}", key=f"a_{n}", on_click=tocar, args=(n,))
 
-# FILA IRA (Teclas Q-Y)
 c_ira = st.columns([1.5, 0.5, 1, 1, 1, 1, 1, 1])
 with c_ira[0]:
     st.markdown(
