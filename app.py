@@ -122,9 +122,9 @@ with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=Fals
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
         """
-        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `do2`, `re2`, `mi2`).
+        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `re2`, `mi2`).
         - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`, `do`).
-        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `sol0`, `la0`, `si0`).
+        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `la0`, `si0`).
         """,
         unsafe_allow_html=True,
     )
