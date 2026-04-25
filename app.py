@@ -117,14 +117,14 @@ with col_t:
 with col_m:
     modo = st.radio("Modo", ["Mayor", "Menor"], horizontal=True)
 
-# --- GUÍA DESPLEGABLE (Ejemplos optimizados para Do -> Sol Mayor) ---
+# --- GUÍA DESPLEGABLE (Ejemplos Re0 a Si2) ---
 with st.expander("📖 Guía de Octavas y Registro Real del Siku", expanded=False):
     st.markdown("### Cómo escribir las notas:")
     st.markdown(
         """
-        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `do2`, `re2` -> serán Sol2 y La2).
-        - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si` -> serán Re, Mi, Fa#).
-        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `sol0`, `la0` -> serán Re0, Mi0).
+        - <span style='color: #9b59b6;'>**Registro Agudo:**</span> Agrega un **2** (ej: `do2`, `re2`, `mi2`).
+        - **Registro Medio:** Escribe la nota normal (ej: `sol`, `la`, `si`, `do`).
+        - <span style='color: #e67e22;'>**Registro Grave:**</span> Agrega un **0** (ej: `sol0`, `la0`, `si0`).
         """,
         unsafe_allow_html=True,
     )
@@ -191,13 +191,11 @@ if entrada:
                 f_arka_num += " " * ancho
                 f_ira_num += num_t.ljust(ancho)
             else:
-                # Nota fuera de rango (pero válida en la escala)
                 f_arka_n += "?".ljust(ancho)
                 f_ira_n += " " * ancho
                 f_arka_num += "?".ljust(ancho)
                 f_ira_num += " " * ancho
         else:
-            # Nota no pertenece a la tonalidad
             f_arka_n += "?".ljust(ancho)
             f_ira_n += " " * ancho
             f_arka_num += "?".ljust(ancho)
